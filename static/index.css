@@ -372,28 +372,28 @@ body {
 }
 
 .btn-explain {
-    height: 28px;
-    padding: 0 14px;
-    background: transparent;
-    border: 1px solid var(--accent-green);
-    border-radius: 14px;
-    color: var(--accent-green);
+    height: 36px;
+    padding: 0 20px;
+    background: var(--accent-green);
+    border: none;
+    border-radius: 18px;
+    color: #000000;
     font-family: var(--font-main);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .btn-explain:hover:not(:disabled) {
-    background: var(--accent-green);
-    color: #000000;
+    background: var(--accent-green-hover);
+    transform: scale(1.02);
 }
 
 .btn-explain:disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
-    border-color: var(--text-muted);
+    background: var(--bg-hover);
     color: var(--text-muted);
 }
 
