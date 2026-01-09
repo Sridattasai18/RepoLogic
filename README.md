@@ -139,4 +139,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-Built with ❤️ using Google Gemini, LangChain, and FAISS
+Built with ❤️ by **Kaligotla Sri Datta Sai Vithal**
+
+Powered by Google Gemini, LangChain, and FAISS
