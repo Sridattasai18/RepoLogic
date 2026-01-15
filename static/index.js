@@ -18,7 +18,8 @@ const state = {
         text: null
     },
     files: [],
-    isLoading: false
+    isLoading: false,
+    qaEnabled: false  // NEW: Enable Q&A after embeddings are ready
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -47,7 +48,10 @@ const elements = {
     explanationResult: document.getElementById('explanation-result'),
     explanationLoading: document.getElementById('explanation-loading'),
     errorToast: document.getElementById('error-toast'),
-    errorMessage: document.getElementById('error-message')
+    errorMessage: document.getElementById('error-message'),
+    // NEW: Q&A elements
+    qaInput: document.getElementById('qa-input'),
+    qaBtn: document.getElementById('qa-btn')
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -352,6 +356,77 @@ async function explainSelection() {
 elements.explainBtn.addEventListener('click', explainSelection);
 
 // ══════════════════════════════════════════════════════════════
+// Natural Language Q&A (NEW FEATURE)
+// ══════════════════════════════════════════════════════════════
+
+async function askQuestion() {
+    const question = elements.qaInput.value.trim();
+
+    if (!question) {
+        showError('Please enter a question');
+        return;
+    }
+
+    if (!state.repoUrl || !state.qaEnabled) {
+        showError('Please analyze a repository first');
+        return;
+    }
+
+    // Show loading state
+    elements.explanationEmpty.classList.add('hidden');
+    elements.explanationResult.classList.add('hidden');
+    elements.explanationLoading.classList.remove('hidden');
+    elements.qaBtn.disabled = true;
+    elements.qaInput.disabled = true;
+    setStatus('loading', 'Thinking...');
+
+    try {
+        // Call the /ask endpoint
+        const result = await apiCall('/ask', {
+            repo_url: state.repoUrl,
+            question: question
+        });
+
+        // Render answer
+        elements.explanationLoading.classList.add('hidden');
+        elements.explanationResult.classList.remove('hidden');
+        elements.explanationResult.innerHTML = marked.parse(result.answer);
+
+        // Highlight code blocks in answer
+        elements.explanationResult.querySelectorAll('pre code').forEach(block => {
+            hljs.highlightElement(block);
+        });
+
+        // Clear input
+        elements.qaInput.value = '';
+
+        setStatus('success', 'Done');
+
+    } catch (error) {
+        elements.explanationLoading.classList.add('hidden');
+        elements.explanationEmpty.classList.remove('hidden');
+        showError(error.message);
+        setStatus('error', 'Failed');
+    } finally {
+        elements.qaBtn.disabled = false;
+        elements.qaInput.disabled = false;
+    }
+}
+
+// Event listeners for Q&A
+if (elements.qaBtn) {
+    elements.qaBtn.addEventListener('click', askQuestion);
+}
+
+if (elements.qaInput) {
+    elements.qaInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !elements.qaBtn.disabled) {
+            askQuestion();
+        }
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
 // Repository Analysis
 // ══════════════════════════════════════════════════════════════
 
@@ -391,6 +466,11 @@ async function analyzeRepository() {
 
         // Render file tree
         renderFileTree(state.files);
+
+        // NEW: Enable Q&A after successful embedding
+        state.qaEnabled = true;
+        elements.qaInput.disabled = false;
+        elements.qaBtn.disabled = false;
 
         setStatus('success', `${ingestResult.stats.total_files} files indexed`);
 

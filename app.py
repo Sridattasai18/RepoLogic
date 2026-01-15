@@ -401,6 +401,106 @@ def explain_selection():
 
 
 # ═══════════════════════════════════════════════════════════════
+# PHASE 6: Natural Language Q&A (NEW FEATURE)
+# ═══════════════════════════════════════════════════════════════
+
+QA_PROMPT = """You are an expert code analyst helping a developer understand a repository.
+
+**User Question**: {question}
+
+**Retrieved Repository Context**:
+{context}
+
+**Your Task**: Answer the user's question based ONLY on the retrieved context.
+
+Guidelines:
+1. **Be specific**: Reference exact files, functions, and line ranges when possible
+2. **Multi-file reasoning**: If the answer spans multiple files, explain the connections
+3. **Grounded answers**: Only use information from the context above
+4. **Admit limitations**: If the context doesn't contain the answer, clearly state: "I couldn't find information about [topic] in the retrieved context."
+5. **Structured response**: Use bullet points, code snippets, and clear sections
+
+Use Markdown formatting. Be educational and precise.
+
+Answer:"""
+
+
+@app.route('/ask', methods=['POST'])
+def ask_question():
+    """
+    Answer natural language questions about the repository
+    POST /ask
+    Body: {
+        "repo_url": "...",
+        "question": "How does authentication work?"
+    }
+    """
+    data = request.json
+    if not data or 'repo_url' not in data or 'question' not in data:
+        return jsonify({"error": "Please provide repo_url and question"}), 400
+    
+    repo_url = data['repo_url'].strip()
+    question = data['question'].strip()
+    
+    if not repo_url or not question:
+        return jsonify({"error": "repo_url and question cannot be empty"}), 400
+    
+    logger.info(f"[ASK] Question: {question}")
+    
+    try:
+        repo_id = get_repo_id(repo_url)
+        
+        # Check if embeddings exist
+        embedding_store = EmbeddingStore()
+        if not embedding_store.has_index(repo_id):
+            return jsonify({"error": "Repository not indexed. Please analyze the repository first."}), 400
+        
+        # Search for relevant chunks using the question
+        similar_chunks = embedding_store.search_similar(
+            repo_id=repo_id,
+            query=question,
+            k=5  # Retrieve top 5 relevant chunks
+        )
+        
+        if not similar_chunks:
+            return jsonify({
+                "question": question,
+                "answer": "I couldn't find relevant information in the repository to answer this question.",
+                "chunks_used": 0
+            }), 200
+        
+        # Build context from retrieved chunks
+        context_parts = []
+        for chunk, score in similar_chunks:
+            context_parts.append(
+                f"[{chunk.file_path}:{chunk.start_line}-{chunk.end_line}]\n{chunk.content}"
+            )
+        
+        context_text = "\n\n---\n\n".join(context_parts)
+        
+        # Generate answer
+        prompt = QA_PROMPT.format(
+            question=question,
+            context=context_text
+        )
+        
+        response = llm.invoke(prompt)
+        answer = response.content
+        
+        logger.info(f"[ASK] ✅ Complete with {len(similar_chunks)} chunks")
+        
+        return jsonify({
+            "question": question,
+            "answer": answer,
+            "chunks_used": len(similar_chunks)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"[ASK] Failed: {e}", exc_info=True)
+        return jsonify({"error": f"Q&A failed: {str(e)}"}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
 # Main
 # ═══════════════════════════════════════════════════════════════
 

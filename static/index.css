@@ -706,6 +706,92 @@ body {
     background-clip: padding-box;
 }
 
+/* ─── Q&A Section (NEW) ─── */
+.qa-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-elevated);
+}
+
+.qa-header {
+    margin-bottom: 12px;
+}
+
+.qa-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+.qa-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.qa-input {
+    flex: 1;
+    height: 38px;
+    padding: 0 14px;
+    background: var(--bg-highlight);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.qa-input:hover:not(:disabled) {
+    background: var(--bg-hover);
+}
+
+.qa-input:focus {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+.qa-input::placeholder {
+    color: var(--text-muted);
+}
+
+.qa-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-qa {
+    height: 38px;
+    padding: 0 18px;
+    background: var(--accent-green);
+    border: none;
+    border-radius: 19px;
+    color: #000000;
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-qa:hover:not(:disabled) {
+    background: var(--accent-green-hover);
+    transform: scale(1.02);
+}
+
+.btn-qa:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-qa:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 1200px) {
     :root {
