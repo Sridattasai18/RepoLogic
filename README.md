@@ -8,7 +8,8 @@ RepoLogic is a selection-based repository analyzer that helps developers underst
 
 ## ✨ Features
 
-- 🎯 **Selection-Based**: Highlight code → Click "Explain" → Get understanding
+- 🎯 **Selection-Based Explanations**: Highlight code → Click "Explain" → Get understanding
+- 💬 **Natural Language Q&A**: Ask questions about the repository without selecting code
 - 📁 **File Tree Navigation**: Browse repository structure like an IDE
 - 🧠 **RAG-Powered**: Uses embeddings and vector search for accurate context
 - 🎨 **Spotify-Inspired UI**: Beautiful dark theme with Manrope typography
@@ -17,11 +18,17 @@ RepoLogic is a selection-based repository analyzer that helps developers underst
 
 ## 🎬 How It Works
 
+### Selection-Based Explanations
 1. **Analyze**: Enter any public GitHub repository URL
 2. **Navigate**: Browse the file tree and click to view code
 3. **Select**: Highlight any code section with your mouse
 4. **Explain**: Click "Explain Selection" for AI-powered explanation
 5. **Learn**: Get context-aware explanations grounded in the actual code
+
+### Natural Language Q&A
+1. **Analyze**: Enter any public GitHub repository URL
+2. **Ask**: Type questions like "How does authentication work?" or "Which files handle routing?"
+3. **Get Answers**: Receive context-grounded responses with file references
 
 ## 🛠️ Tech Stack
 
@@ -111,11 +118,13 @@ RepoLogic/
 | `/embed` | POST | Generate embeddings |
 | `/file-content` | GET | Get file content |
 | `/explain` | POST | Explain selected code |
+| `/ask` | POST | Answer natural language questions |
 
 ## 🎨 UI Features
 
 - **Three-Panel Layout**: Files → Code → Explanation
 - **IDE-Like Experience**: Navigate and explore code naturally
+- **Natural Language Q&A**: Ask questions about the repo in plain English
 - **Syntax Highlighting**: Language-aware code display
 - **Selection Tracking**: See exactly what lines you've selected
 - **Markdown Rendering**: Rich formatted explanations
