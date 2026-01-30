@@ -8,6 +8,9 @@ __pycache__/
 *.so
 .Python
 
+# Data directory (cached repos, chunks, embeddings)
+data/
+
 # Vector database (contains indexed repositories)
 vector_store/
 repos/

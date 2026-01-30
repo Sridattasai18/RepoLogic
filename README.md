@@ -1,6 +1,6 @@
 # 🚀 RepoLogic - AI-Powered Repository Analyzer
 
-RepoLogic is a selection-based repository analyzer that helps developers understand code through AI-powered explanations. Select any code in a repository, and get instant, contextual explanations.
+**The IDE that explains itself.** RepoLogic turns any GitHub repository into an interactive knowledge base with AI-powered explanations, multi-project workspace management, and natural language Q&A.
 
 ![RepoLogic Preview](https://img.shields.io/badge/Status-Active-success)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
@@ -10,25 +10,34 @@ RepoLogic is a selection-based repository analyzer that helps developers underst
 
 - 🎯 **Selection-Based Explanations**: Highlight code → Click "Explain" → Get understanding
 - 💬 **Natural Language Q&A**: Ask questions about the repository without selecting code
+- 🗂️ **Multi-Project Spaces**: Manage multiple repositories with persistent sessions
 - 📁 **File Tree Navigation**: Browse repository structure like an IDE
 - 🧠 **RAG-Powered**: Uses embeddings and vector search for accurate context
-- 🎨 **Spotify-Inspired UI**: Beautiful dark theme with Manrope typography
+- 🎨 **Premium UI**: Beautiful dark theme with smooth animations and modern design
 - ⚡ **Fast Retrieval**: FAISS vector database for instant semantic search
 - 🔍 **Line-Number Tracking**: Precise code location awareness
+- 💾 **Session Persistence**: Your analyzed repos are saved locally
+- ⌨️ **Keyboard Shortcuts**: Ctrl+E to explain selected code
 
 ## 🎬 How It Works
 
+### Multi-Space Workflow
+1. **Landing Page**: Visit RepoLogic and click "Analyze a Repository"
+2. **Create Space**: Enter a GitHub URL → Space is created automatically
+3. **Analysis**: Repository is cloned, chunked, and embedded
+4. **Explore**: Browse files, select code, and get AI explanations
+5. **Switch**: Easily switch between multiple project spaces
+
 ### Selection-Based Explanations
-1. **Analyze**: Enter any public GitHub repository URL
-2. **Navigate**: Browse the file tree and click to view code
-3. **Select**: Highlight any code section with your mouse
-4. **Explain**: Click "Explain Selection" for AI-powered explanation
-5. **Learn**: Get context-aware explanations grounded in the actual code
+1. **Navigate**: Browse the file tree and click to view code
+2. **Select**: Highlight any code section with your mouse
+3. **Explain**: Click "Explain Selection" or press Ctrl+E
+4. **Learn**: Get context-aware explanations with source references
 
 ### Natural Language Q&A
-1. **Analyze**: Enter any public GitHub repository URL
-2. **Ask**: Type questions like "How does authentication work?" or "Which files handle routing?"
-3. **Get Answers**: Receive context-grounded responses with file references
+1. **Ask**: Type questions like "How does authentication work?"
+2. **Get Answers**: Receive context-grounded responses with file references
+3. **Explore**: Click on source files to dive deeper
 
 ## 🛠️ Tech Stack
 
@@ -91,14 +100,15 @@ RepoLogic/
 ├── requirements.txt    # Python dependencies
 ├── static/
 │   ├── index.html      # Frontend UI
-│   ├── index.css       # Spotify-inspired styling
-│   └── index.js        # Frontend logic
+│   ├── index.css       # Premium dark theme styling
+│   └── index.js        # Frontend logic + SpaceManager
 ├── tools/
 │   ├── github_loader.py    # GitHub repository handling
 │   ├── repo_ingestor.py    # Repository ingestion
 │   ├── chunker.py          # Code chunking with line numbers
 │   ├── embedder.py         # FAISS embeddings
-│   └── vector_store.py     # Vector database operations
+│   └── github_api.py       # GitHub API integration
+├── data/               # Cached repos, chunks, embeddings
 └── .env.example        # Environment template
 ```
 
@@ -122,18 +132,28 @@ RepoLogic/
 
 ## 🎨 UI Features
 
+- **Landing Page**: Professional intro with workflow showcase
+- **Multi-Space Sidebar**: Switch between projects instantly
 - **Three-Panel Layout**: Files → Code → Explanation
 - **IDE-Like Experience**: Navigate and explore code naturally
-- **Natural Language Q&A**: Ask questions about the repo in plain English
+- **Natural Language Q&A**: Ask questions in plain English
 - **Syntax Highlighting**: Language-aware code display
 - **Selection Tracking**: See exactly what lines you've selected
 - **Markdown Rendering**: Rich formatted explanations
+- **Source References**: Click to jump to referenced files
+- **Response Metadata**: See response time and chunks used
+
+## ⌨️ Keyboard Shortcuts
+
+- `Ctrl+E` / `Cmd+E` - Explain selected code
+- `Escape` - Close modals
 
 ## 🔐 Security
 
 - API keys are never exposed to the client
 - Environment variables for sensitive data
-- `.gitignore` protects local files
+- `.gitignore` protects local files and data
+- No backend modifications to RAG pipeline
 
 ## 📄 License
 

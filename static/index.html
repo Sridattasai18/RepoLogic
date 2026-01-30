@@ -4,157 +4,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RepoLogic | Repository Analyzer</title>
-    <meta name="description" content="Select code, understand instantly. AI-powered repository exploration.">
+    <title>RepoLogic — The Intelligent Code Explorer</title>
+    <meta name="description"
+        content="A precision instrument for understanding codebases. Select code, get instant answers grounded in your repository's logic.">
 
-    <!-- Typography: Manrope (Spotify-like) + JetBrains Mono for code -->
+    <!-- Typography: Inter (UI) + JetBrains Mono (Code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
 
     <!-- Syntax Highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 
+    <!-- Premium Design System -->
     <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
     <div class="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-brand">
-                <span class="brand-icon">◈</span>
-                <span class="brand-name">RepoLogic</span>
-            </div>
 
-            <div class="header-input">
-                <input type="url" id="repo-url-input" class="url-input" placeholder="Paste GitHub repository URL..."
-                    spellcheck="false">
-                <button id="analyze-btn" class="btn-analyze">
-                    <span class="btn-text">Analyze</span>
-                    <span class="btn-icon">→</span>
-                </button>
-            </div>
+        <!-- ══════════════════════════════════════════════════
+             LANDING EXPERIENCE (Editorial / Storytelling)
+             ══════════════════════════════════════════════════ -->
+        <section class="landing" id="landing">
 
-            <div class="header-status">
-                <span id="status-indicator" class="status-dot"></span>
-                <span id="status-text" class="status-text">Ready</span>
-            </div>
-        </header>
-
-        <!-- Main Layout -->
-        <main class="main-layout">
-            <!-- Left Panel: File Tree -->
-            <aside class="panel panel-files" id="files-panel">
-                <div class="panel-header">
-                    <h2 class="panel-title">Files</h2>
-                    <span id="file-count" class="panel-badge">0</span>
+            <!-- Contextual Navigation -->
+            <nav class="landing-nav">
+                <div class="brand">
+                    <span class="brand-icon">◈</span>
+                    <span class="brand-name">RepoLogic</span>
                 </div>
+                <!-- Optional: Add 'Docs' or 'GitHub' links here if needed -->
+            </nav>
 
-                <div class="panel-search">
-                    <input type="text" id="file-search" class="search-input" placeholder="Filter files...">
-                </div>
+            <div class="landing-content">
+                <!-- Hero Section -->
+                <div class="hero">
+                    <div class="hero-badge">Alpha Preview</div>
+                    <h1 class="hero-title">The IDE that <br>explains itself.</h1>
+                    <p class="hero-subtitle">
+                        Stop guessing. Start understanding. <br>
+                        RepoLogic turns any GitHub repository into an interactive knowledge base.
+                    </p>
 
-                <div id="file-tree" class="file-tree">
-                    <div class="empty-state" id="files-empty">
-                        <p>Enter a repository URL above to explore its files.</p>
-                    </div>
-                </div>
-            </aside>
-
-            <!-- Center Panel: Code Viewer -->
-            <section class="panel panel-code" id="code-panel">
-                <div class="panel-header">
-                    <h2 class="panel-title" id="current-file">No file selected</h2>
-                    <div class="panel-actions">
-                        <button id="explain-btn" class="btn-explain" disabled>
-                            Explain Selection
+                    <div class="hero-actions">
+                        <button class="hero-cta" id="launch-app-btn">
+                            <span>Analyze a Repository</span>
+                            <span class="icon-arrow">→</span>
                         </button>
                     </div>
                 </div>
 
-                <div id="code-viewer" class="code-viewer">
-                    <div class="empty-state" id="code-empty">
-                        <div class="empty-icon">📄</div>
-                        <p>Select a file from the tree to view its code.</p>
-                        <p class="empty-hint">Then highlight code and click "Explain Selection"</p>
-                    </div>
+                <!-- Interaction Model Showcase -->
+                <div class="interaction-showcase">
+                    <h3 class="showcase-title">Precision Workflow</h3>
 
-                    <!-- Code content will be inserted here -->
-                    <div id="code-content" class="code-content hidden">
-                        <div class="line-numbers" id="line-numbers"></div>
-                        <pre><code id="code-text" class="code-text"></code></pre>
-                    </div>
-                </div>
-
-                <div class="selection-info hidden" id="selection-info">
-                    <span class="selection-label">Selected:</span>
-                    <span id="selection-range" class="selection-range">Lines 0-0</span>
-                </div>
-            </section>
-
-            <!-- Right Panel: Explanation -->
-            <aside class="panel panel-explanation" id="explanation-panel">
-                <div class="panel-header">
-                    <h2 class="panel-title">Explanation</h2>
-                </div>
-
-                <!-- NEW: Q&A Section -->
-                <div class="qa-section" id="qa-section">
-                    <div class="qa-header">
-                        <span class="qa-label">💬 Ask about this repository</span>
-                    </div>
-                    <div class="qa-input-group">
-                        <input type="text" id="qa-input" class="qa-input" 
-                               placeholder="e.g., How does authentication work?" 
-                               disabled />
-                        <button id="qa-btn" class="btn-qa" disabled>Ask</button>
-                    </div>
-                </div>
-
-                <div id="explanation-content" class="explanation-content">
-                    <div class="empty-state" id="explanation-empty">
-                        <div class="empty-icon">💡</div>
-                        <p>Select code to get an AI-powered explanation.</p>
-                        <div class="instruction-steps">
-                            <div class="step">
-                                <span class="step-num">1</span>
-                                <span class="step-text">Choose a file</span>
+                    <div class="showcase-steps">
+                        <div class="showcase-step">
+                            <div class="showcase-number">01</div>
+                            <div class="showcase-content">
+                                <div class="showcase-visual">📁</div>
+                                <div class="showcase-label">Navigate</div>
+                                <p class="showcase-desc">Explore the file tree naturally.</p>
                             </div>
-                            <div class="step">
-                                <span class="step-num">2</span>
-                                <span class="step-text">Highlight code lines</span>
+                        </div>
+
+                        <div class="showcase-arrow">→</div>
+
+                        <div class="showcase-step">
+                            <div class="showcase-number">02</div>
+                            <div class="showcase-content">
+                                <div class="showcase-visual">🎯</div>
+                                <div class="showcase-label">Select</div>
+                                <p class="showcase-desc">Highlight any block of code.</p>
                             </div>
-                            <div class="step">
-                                <span class="step-num">3</span>
-                                <span class="step-text">Click "Explain Selection"</span>
+                        </div>
+
+                        <div class="showcase-arrow">→</div>
+
+                        <div class="showcase-step">
+                            <div class="showcase-number">03</div>
+                            <div class="showcase-content">
+                                <div class="showcase-visual">✨</div>
+                                <div class="showcase-label">Understand</div>
+                                <p class="showcase-desc">Get instant, grounded context.</p>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Explanation will be inserted here -->
-                    <div id="explanation-result" class="explanation-result hidden"></div>
                 </div>
 
-                <div class="explanation-loading hidden" id="explanation-loading">
-                    <div class="loading-spinner"></div>
-                    <p>Analyzing code...</p>
+                <!-- Core Features Grid -->
+                <div class="features">
+                    <div class="feature-card">
+                        <span class="feature-icon">🔍</span>
+                        <h3 class="feature-title">Context Review</h3>
+                        <p class="feature-description">
+                            RepoLogic reads the entire repository, not just the file. It understands imports,
+                            dependencies, and project structure to give you the complete picture.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">🛡️</span>
+                        <h3 class="feature-title">Zero Hallucination</h3>
+                        <p class="feature-description">
+                            Built on a strict RAG architecture. Every explanation is grounded in your actual code. If
+                            the logic isn't there, we won't invent it.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">⚡</span>
+                        <h3 class="feature-title">Instant Insight</h3>
+                        <p class="feature-description">
+                            No chatting required. Just select code like you would in your IDE, and get an explanation
+                            instantly. It's the fastest way to grok a new codebase.
+                        </p>
+                    </div>
+                </div>
+
+                <footer class="landing-footer">
+                    <p>Designed for developers who value clarity.</p>
+                </footer>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════
+             SPACE CREATION MODAL
+             ══════════════════════════════════════════════════ -->
+        <div class="modal-overlay hidden" id="space-modal-overlay">
+            <div class="modal space-modal" id="space-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">Create New Space</h2>
+                    <button class="modal-close" id="modal-close-btn">×</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">GitHub Repository URL</label>
+                        <div class="input-wrapper modal-input-wrapper">
+                            <span class="input-icon">🔗</span>
+                            <input type="url" id="space-repo-url" class="form-input"
+                                placeholder="github.com/owner/repository" spellcheck="false">
+                        </div>
+                        <p class="form-hint">Paste any public GitHub repository URL</p>
+                    </div>
+
+                    <div class="space-preview hidden" id="space-preview">
+                        <div class="preview-label">Space Name</div>
+                        <div class="preview-value" id="space-name-preview">owner/repository</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+                    <button class="btn-primary" id="create-space-btn" disabled>
+                        <span>Create Space</span>
+                        <span class="icon-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             APPLICATION INTERFACE (Productivity Tool)
+             ══════════════════════════════════════════════════ -->
+        <div class="main-app hidden" id="main-app">
+
+            <!-- Spaces Sidebar -->
+            <aside class="spaces-sidebar" id="spaces-sidebar">
+                <div class="spaces-header">
+                    <span class="spaces-title">Spaces</span>
+                    <button class="btn-add-space" id="add-space-btn" title="Create New Space">+</button>
+                </div>
+                <div class="spaces-list" id="spaces-list">
+                    <!-- Dynamically populated -->
                 </div>
             </aside>
-        </main>
 
-        <!-- Error Toast -->
-        <div id="error-toast" class="toast toast-error hidden">
-            <span id="error-message"></span>
-            <button class="toast-close" onclick="hideError()">×</button>
+            <!-- App Content (Header + Workspace) -->
+            <div class="app-content">
+                <!-- App Header -->
+                <header class="header">
+                    <button class="header-brand-btn" id="home-btn" title="Back to Home">
+                        <span class="brand-icon">◈</span>
+                        <span class="brand-name">RepoLogic</span>
+                    </button>
+
+                    <div class="header-input">
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔗</span>
+                            <input type="url" id="repo-url-input" class="url-input"
+                                placeholder="github.com/username/repo" spellcheck="false">
+                        </div>
+
+                        <button id="analyze-btn" class="btn-analyze">
+                            <span class="btn-text">Analyze</span>
+                        </button>
+                    </div>
+
+                    <div class="header-status">
+                        <div class="status-indicator">
+                            <span id="status-indicator" class="status-dot"></span>
+                            <span class="pulse-ring"></span>
+                        </div>
+                        <span id="status-text" class="status-text">Ready</span>
+                    </div>
+                </header>
+
+                <!-- Main Workspace -->
+                <main class="main-layout">
+
+                    <!-- Left: File Explorer -->
+                    <aside class="panel panel-files" id="files-panel">
+                        <div class="panel-header">
+                            <span class="panel-icon">📂</span>
+                            <h2 class="panel-title">Explorer</h2>
+                            <span id="file-count" class="panel-badge hidden">0</span>
+                        </div>
+
+                        <div class="panel-search-wrapper">
+                            <input type="text" id="file-search" class="search-input" placeholder="Filter files..."
+                                autocomplete="off">
+                        </div>
+
+                        <div class="empty-state" id="files-empty" style="flex: 1;">
+                            <span class="empty-icon-small">⚡</span>
+                            <p>Enter a Repo URL to begin</p>
+                        </div>
+
+                        <div id="file-tree" class="file-tree"></div>
+                    </aside>
+
+                    <!-- Center: Code Editor/Viewer -->
+                    <section class="panel panel-code" id="code-panel">
+                        <div class="panel-header code-header">
+                            <div class="tab-active">
+                                <span class="file-icon">📄</span>
+                                <span class="panel-title" id="current-file">No file selected</span>
+                            </div>
+
+                            <div class="panel-actions">
+                                <button id="copy-btn" class="btn-icon-only" title="Copy File Content" disabled>
+                                    <span class="btn-icon">📋</span>
+                                </button>
+                                <button id="explain-btn" class="btn-explain" disabled>
+                                    <span class="btn-icon">✨</span>
+                                    <span>Explain Selection</span>
+                                    <span class="keyboard-hint"><kbd class="kbd">Ctrl</kbd><kbd
+                                            class="kbd">E</kbd></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="code-viewer" class="code-viewer">
+                            <div class="empty-state" id="code-empty">
+                                <div class="empty-visual">
+                                    <span class="browser-dots">
+                                        <i></i><i></i><i></i>
+                                    </span>
+                                </div>
+                                <h3 class="empty-title">Ready to Explore</h3>
+                                <p class="empty-desc">Select a file from the explorer to view its contents.</p>
+                            </div>
+
+                            <!-- Code Content -->
+                            <div id="code-content" class="code-content hidden">
+                                <div class="line-numbers" id="line-numbers"></div>
+                                <pre><code id="code-text" class="code-text"></code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Floating Selection Indicator -->
+                        <div class="selection-toast hidden" id="selection-info">
+                            <span class="check-icon">✓</span>
+                            <span id="selection-range" class="selection-range">Lines 12-24 selected</span>
+                        </div>
+                    </section>
+
+                    <!-- Right: Intelligence Panel -->
+                    <aside class="panel panel-explanation" id="explanation-panel">
+                        <div class="panel-header">
+                            <span class="panel-icon">💡</span>
+                            <h2 class="panel-title">Intelligence</h2>
+                        </div>
+
+                        <!-- Q&A Module -->
+                        <div class="qa-section" id="qa-section">
+                            <div class="qa-input-wrapper">
+                                <input type="text" id="qa-input" class="qa-input"
+                                    placeholder="Ask a question about this repo..." disabled />
+                                <button id="qa-btn" class="btn-qa" disabled>Ask</button>
+                            </div>
+                        </div>
+
+                        <div id="explanation-content" class="explanation-content">
+                            <div class="empty-state" id="explanation-empty">
+                                <div class="empty-visual-small">✨</div>
+                                <p class="empty-text">Select code to reveal its logic.</p>
+
+                                <!-- Interaction Steps Guide -->
+                                <div class="instruction-list" id="instruction-list">
+                                    <div class="instruction-item">
+                                        <span class="key-shortcut">1</span>
+                                        <span>Open a file</span>
+                                    </div>
+                                    <div class="instruction-item">
+                                        <span class="key-shortcut">2</span>
+                                        <span>Select code</span>
+                                    </div>
+                                    <div class="instruction-item">
+                                        <span class="key-shortcut">3</span>
+                                        <span>Click Explain</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result Area -->
+                            <div id="explanation-result" class="explanation-result hidden"></div>
+                        </div>
+
+                        <div class="explanation-loading hidden" id="explanation-loading">
+                            <div class="loading-bar">
+                                <div class="bar-fill"></div>
+                            </div>
+                            <p class="loading-text">Analyzing logic path...</p>
+                        </div>
+                    </aside>
+                </main>
+            </div>
+
+            <!-- Global Components -->
+            <div id="error-toast" class="toast toast-error hidden">
+                <span class="toast-icon">⚠️</span>
+                <span id="error-message">Error message</span>
+                <button class="toast-close" onclick="hideError()">×</button>
+            </div>
+
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="index.js"></script>
+        <!-- Scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+        <script src="index.js"></script>
 </body>
 
 </html>

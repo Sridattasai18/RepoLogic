@@ -55,7 +55,20 @@ class EmbeddingStore:
         logger.info(f"Generating embeddings for {len(chunks)} chunks...")
         
         # Batch embedding generation
-        embeddings = model.embed_documents(texts_to_embed)
+        embeddings = []
+        batch_size = 100
+        
+        for i in range(0, len(texts_to_embed), batch_size):
+            batch = texts_to_embed[i:i + batch_size]
+            try:
+                batch_embeddings = model.embed_documents(batch)
+                embeddings.extend(batch_embeddings)
+                logger.info(f"Processed batch {i//batch_size + 1}/{(len(texts_to_embed) + batch_size - 1)//batch_size}")
+            except Exception as e:
+                logger.error(f"Error embedding batch {i}-{i+batch_size}: {e}")
+                # Optional: Add empty embeddings or handle retry
+                # For now, we'll just fail the batch which is safer than misaligning indices
+                raise e
         
         embeddings_array = np.array(embeddings, dtype='float32')
         logger.info(f"✅ Generated embeddings: shape {embeddings_array.shape}")

@@ -14,6 +14,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pathlib import Path
 import logging
 import os
+import time
+import concurrent.futures
+
 
 # ═══════════════════════════════════════════════════════════════
 # Logging Setup
@@ -143,40 +146,58 @@ def chunk_repo():
         all_chunks = []
         files_chunked = 0
         
+        # Collect all files to process first
+        files_to_process = []
         for root, dirs, files in os.walk(repo_path):
             dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
             
             for file in files:
                 file_path = Path(root) / file
+                
+                # Fast checks before adding to list
+                if file_path.suffix.lower() not in INCLUDED_EXTENSIONS:
+                    continue
+                    
+                files_to_process.append(file_path)
+
+        def process_file(file_path):
+            """Helper to process a single file"""
+            try:
+                if file_path.stat().st_size > 1_000_000:
+                    return []
+                
+                content = file_path.read_text(encoding='utf-8', errors='ignore')
+                if not content.strip():
+                    return []
+                
                 rel_path = file_path.relative_to(repo_path)
                 ext = file_path.suffix.lower()
+                language = detect_language(file_path)
                 
-                if ext not in INCLUDED_EXTENSIONS:
-                    continue
-                
-                if file_path.stat().st_size > 1_000_000:
-                    continue
-                
+                return chunker.chunk_file(
+                    repo_id=repo_id,
+                    file_path=str(rel_path).replace('\\', '/'),
+                    content=content,
+                    language=language,
+                    extension=ext
+                )
+            except Exception as e:
+                logger.warning(f"[CHUNK] Error processing {file_path}: {e}")
+                return []
+
+        # Process files in parallel
+        # Using a modest number of workers (e.g. 10) to balance I/O and CPU
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_file = {executor.submit(process_file, fp): fp for fp in files_to_process}
+            
+            for future in concurrent.futures.as_completed(future_to_file):
                 try:
-                    content = file_path.read_text(encoding='utf-8', errors='ignore')
-                    if not content.strip():
-                        continue
-                    
-                    language = detect_language(file_path)
-                    file_chunks = chunker.chunk_file(
-                        repo_id=repo_id,
-                        file_path=str(rel_path).replace('\\', '/'),
-                        content=content,
-                        language=language,
-                        extension=ext
-                    )
-                    
-                    all_chunks.extend(file_chunks)
-                    files_chunked += 1
-                    
+                    chunks = future.result()
+                    if chunks:
+                        all_chunks.extend(chunks)
+                        files_chunked += 1
                 except Exception as e:
-                    logger.warning(f"[CHUNK] Error chunking {rel_path}: {e}")
-                    continue
+                    logger.error(f"Worker failed: {e}")
         
         chunk_store.save_chunks(repo_id, all_chunks)
         
@@ -350,6 +371,7 @@ def explain_selection():
     logger.info(f"[EXPLAIN] {file_path} L{start_line}-{end_line}")
     
     try:
+        start_time = time.time()
         repo_id = get_repo_id(repo_url)
         
         embedding_store = EmbeddingStore()
@@ -362,16 +384,29 @@ def explain_selection():
             additional_context_k=3
         )
         
-        # Build context
+        # Build context and collect sources
         context_parts = []
+        sources = []
+        
         for chunk in context_data['selected_chunks']:
             context_parts.append(
                 f"[{chunk.file_path}:{chunk.start_line}-{chunk.end_line}]\n{chunk.content}"
             )
+            sources.append({
+                "file": chunk.file_path,
+                "lines": f"{chunk.start_line}-{chunk.end_line}",
+                "type": "selected"
+            })
+        
         for chunk in context_data['context_chunks']:
             context_parts.append(
                 f"[Related: {chunk.file_path}:{chunk.start_line}-{chunk.end_line}]\n{chunk.content}"
             )
+            sources.append({
+                "file": chunk.file_path,
+                "lines": f"{chunk.start_line}-{chunk.end_line}",
+                "type": "related"
+            })
         
         context_text = "\n\n---\n\n".join(context_parts) if context_parts else selected_code
         
@@ -386,13 +421,17 @@ def explain_selection():
         response = llm.invoke(prompt)
         explanation = response.content
         
-        logger.info(f"[EXPLAIN] ✅ Complete for {file_path}")
+        response_time_ms = int((time.time() - start_time) * 1000)
+        
+        logger.info(f"[EXPLAIN] ✅ Complete for {file_path} in {response_time_ms}ms")
         
         return jsonify({
             "file_path": file_path,
             "line_range": f"{start_line}-{end_line}",
             "explanation": explanation,
-            "context_chunks_used": len(context_data['selected_chunks']) + len(context_data['context_chunks'])
+            "context_chunks_used": len(context_data['selected_chunks']) + len(context_data['context_chunks']),
+            "sources": sources,
+            "response_time_ms": response_time_ms
         }), 200
         
     except Exception as e:
@@ -448,6 +487,7 @@ def ask_question():
     logger.info(f"[ASK] Question: {question}")
     
     try:
+        start_time = time.time()
         repo_id = get_repo_id(repo_url)
         
         # Check if embeddings exist
@@ -466,15 +506,23 @@ def ask_question():
             return jsonify({
                 "question": question,
                 "answer": "I couldn't find relevant information in the repository to answer this question.",
-                "chunks_used": 0
+                "chunks_used": 0,
+                "sources": [],
+                "response_time_ms": int((time.time() - start_time) * 1000)
             }), 200
         
-        # Build context from retrieved chunks
+        # Build context from retrieved chunks and collect sources
         context_parts = []
+        sources = []
         for chunk, score in similar_chunks:
             context_parts.append(
                 f"[{chunk.file_path}:{chunk.start_line}-{chunk.end_line}]\n{chunk.content}"
             )
+            sources.append({
+                "file": chunk.file_path,
+                "lines": f"{chunk.start_line}-{chunk.end_line}",
+                "relevance_score": round(1 / (1 + score), 2)  # Convert L2 distance to similarity
+            })
         
         context_text = "\n\n---\n\n".join(context_parts)
         
@@ -487,12 +535,16 @@ def ask_question():
         response = llm.invoke(prompt)
         answer = response.content
         
-        logger.info(f"[ASK] ✅ Complete with {len(similar_chunks)} chunks")
+        response_time_ms = int((time.time() - start_time) * 1000)
+        
+        logger.info(f"[ASK] ✅ Complete with {len(similar_chunks)} chunks in {response_time_ms}ms")
         
         return jsonify({
             "question": question,
             "answer": answer,
-            "chunks_used": len(similar_chunks)
+            "chunks_used": len(similar_chunks),
+            "sources": sources,
+            "response_time_ms": response_time_ms
         }), 200
         
     except Exception as e:
