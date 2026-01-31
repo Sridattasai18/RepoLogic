@@ -653,9 +653,26 @@ if (elements.qaBtn) {
 }
 
 if (elements.qaInput) {
-    elements.qaInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !elements.qaBtn.disabled) {
-            askQuestion();
+    // Auto-resize logic
+    elements.qaInput.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+
+        // Reset if empty
+        if (this.value === '') {
+            this.style.height = '';
+        }
+    });
+
+    // Handle Enter key (Shift+Enter for new line)
+    elements.qaInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault(); // Prevent newline
+            if (!elements.qaBtn.disabled) {
+                askQuestion();
+                // Reset height after submit
+                elements.qaInput.style.height = '';
+            }
         }
     });
 }

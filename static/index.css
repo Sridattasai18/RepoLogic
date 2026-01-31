@@ -2341,3 +2341,14 @@ body {
     letter-spacing: 0.05em;
     text-transform: uppercase;
 }
+
+/*  Flexible Textarea  */
+textarea.qa-input {
+    resize: none;
+    overflow-y: hidden;
+    min-height: 44px;
+    max-height: 200px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    line-height: 1.5;
+}
