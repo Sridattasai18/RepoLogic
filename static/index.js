@@ -1026,3 +1026,62 @@ if (elements.createSpaceBtn) {
 }
 
 console.log('◈ RepoLogic initialized — Multi-Space Architecture | Ctrl+E to explain');
+
+// 
+// Resizable Panels
+// 
+
+function initResizers() {
+    const resizerLeft = document.getElementById('resizer-left');
+    const resizerRight = document.getElementById('resizer-right');
+    const filesPanel = document.getElementById('files-panel');
+    const explanationPanel = document.getElementById('explanation-panel');
+    const root = document.documentElement;
+
+    // Helper: Handle resizing logic
+    function makeResizable(resizer, targetPanel, isRightPanel) {
+        if (!resizer || !targetPanel) return;
+
+        resizer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            resizer.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+
+            const startX = e.clientX;
+            const startWidth = targetPanel.getBoundingClientRect().width;
+
+            function onMouseMove(e) {
+                let newWidth;
+                if (isRightPanel) {
+                    // Right panel resizing (dragging left increases width)
+                    newWidth = startWidth - (e.clientX - startX);
+                } else {
+                    // Left panel resizing (dragging right increases width)
+                    newWidth = startWidth + (e.clientX - startX);
+                }
+
+                // Update CSS variable
+                const varName = isRightPanel ? '--panel-explanation-width' : '--panel-files-width';
+                root.style.setProperty(varName, newWidth + 'px');
+            }
+
+            function onMouseUp() {
+                resizer.classList.remove('active');
+                document.body.style.cursor = '';
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            }
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
+    makeResizable(resizerLeft, filesPanel, false);
+    makeResizable(resizerRight, explanationPanel, true);
+}
+
+// Initialize resizers when app loads
+document.addEventListener('DOMContentLoaded', initResizers);
+// Also try initializing if app view is already active (for SPA navigation)
+initResizers();

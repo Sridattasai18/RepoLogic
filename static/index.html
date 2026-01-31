@@ -42,18 +42,32 @@
             <div class="landing-content">
                 <!-- Hero Section -->
                 <div class="hero">
-                    <div class="hero-badge">Alpha Preview</div>
-                    <h1 class="hero-title">The IDE that <br>explains itself.</h1>
+                    <h1 class="hero-title">Understand any GitHub repo <br>in minutes, not hours.</h1>
                     <p class="hero-subtitle">
-                        Stop guessing. Start understanding. <br>
-                        RepoLogic turns any GitHub repository into an interactive knowledge base.
+                        Built for students, open-source contributors, and developers onboarding fast.
                     </p>
 
                     <div class="hero-actions">
                         <button class="hero-cta" id="launch-app-btn">
-                            <span>Analyze a Repository</span>
+                            <span>Try with a GitHub Repo</span>
                             <span class="icon-arrow">→</span>
                         </button>
+                    </div>
+
+                    <div class="hero-features">
+                        <div class="hero-feature">
+                            <span class="feature-icon-small">⚡</span> Explains unfamiliar code instantly
+                        </div>
+                        <div class="hero-feature">
+                            <span class="feature-icon-small">🧠</span> Builds repo knowledge maps
+                        </div>
+                        <div class="hero-feature">
+                            <span class="feature-icon-small">🔍</span> Answers questions about any file
+                        </div>
+                    </div>
+
+                    <div class="hero-visual">
+                        <img src="demo_preview.png" alt="RepoLogic Interface Demo" class="hero-image">
                     </div>
                 </div>
 
@@ -126,7 +140,11 @@
                 </div>
 
                 <footer class="landing-footer">
-                    <p>Designed for developers who value clarity.</p>
+                    <p class="copyright">
+                        &copy; 2026 <a href="https://github.com/Sridattasai18" target="_blank"
+                            class="footer-link">Kaligotla Sri Datta Sai Vithal</a>
+                    </p>
+                    <p class="footer-tagline">Designed & Built with code.</p>
                 </footer>
             </div>
         </section>
@@ -238,6 +256,9 @@
                         <div id="file-tree" class="file-tree"></div>
                     </aside>
 
+                    <!-- Resizer Left -->
+                    <div class="resizer" id="resizer-left"></div>
+
                     <!-- Center: Code Editor/Viewer -->
                     <section class="panel panel-code" id="code-panel">
                         <div class="panel-header code-header">
@@ -283,6 +304,9 @@
                             <span id="selection-range" class="selection-range">Lines 12-24 selected</span>
                         </div>
                     </section>
+
+                    <!-- Resizer Right -->
+                    <div class="resizer" id="resizer-right"></div>
 
                     <!-- Right: Intelligence Panel -->
                     <aside class="panel panel-explanation" id="explanation-panel">
