@@ -108,7 +108,7 @@ RepoLogic/
 │   ├── chunker.py          # Code chunking with line numbers
 │   ├── embedder.py         # FAISS embeddings
 │   └── github_api.py       # GitHub API integration
-├── data/               # Cached repos, chunks, embeddings
+├── docs/               # Project documentation
 └── .env.example        # Environment template
 ```
 
