@@ -10,7 +10,7 @@ class Config:
 
     # Models
     LLM_MODEL = "gemini-flash-lite-latest"
-    EMBEDDING_MODEL = "models/text-embedding-004"
+    EMBEDDING_MODEL = "models/gemini-embedding-001"
 
     # Environment detection
     IS_VERCEL = os.getenv("VERCEL_ENV") is not None or os.getenv("VERCEL") is not None
@@ -39,6 +39,13 @@ class Config:
     # API Settings
     REQUEST_TIMEOUT = 10  # seconds
     MAX_RETRIES = 3
+
+    # Embedding Settings (tune per Gemini quota tier)
+    EMBEDDING_BATCH_SIZE = 20           # chunks per API call (100 is too aggressive for free tier)
+    EMBEDDING_BATCH_DELAY_SEC = 15.0    # seconds to sleep between batches
+    EMBEDDING_MAX_RETRIES = 5           # tenacity retry attempts per batch
+    EMBEDDING_RETRY_MIN_WAIT = 10       # seconds, exponential backoff base
+    EMBEDDING_RETRY_MAX_WAIT = 60       # seconds, exponential backoff ceiling
     
     # Repository Settings
     MAX_REPO_SIZE_MB = 500  # Maximum repository size to clone

@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RepoLogic — The Intelligent Code Explorer</title>
+    <title>RepoLogic</title>
     <meta name="description"
-        content="A precision instrument for understanding codebases. Select code, get instant answers grounded in your repository's logic.">
+        content="A precision instrument for understanding codebases.">
 
-    <!-- Typography: Inter (UI) + JetBrains Mono (Code) -->
+    <!-- Typography: IBM Plex Sans (UI) + IBM Plex Mono (Code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
 
     <!-- Syntax Highlighting -->
@@ -22,48 +22,30 @@
     <link rel="stylesheet" href="index.css">
 </head>
 
-<body>
+<body class="repologic-a">
     <div class="app">
 
         <!-- ══════════════════════════════════════════════════
              LANDING EXPERIENCE (Editorial / Storytelling)
              ══════════════════════════════════════════════════ -->
         <section class="landing" id="landing">
-
-            <!-- Contextual Navigation -->
             <nav class="landing-nav">
                 <div class="brand">
-                    <span class="brand-icon">◈</span>
                     <span class="brand-name">RepoLogic</span>
                 </div>
-                <!-- Optional: Add 'Docs' or 'GitHub' links here if needed -->
             </nav>
 
             <div class="landing-content">
-                <!-- Hero Section -->
                 <div class="hero">
-                    <h1 class="hero-title">Understand any GitHub repo <br>in minutes, not hours.</h1>
+                    <h1 class="hero-title">Understand any GitHub repo in minutes.</h1>
                     <p class="hero-subtitle">
-                        Built for students, open-source contributors, and developers onboarding fast.
+                        Built for developers onboarding fast.
                     </p>
 
                     <div class="hero-actions">
                         <button class="hero-cta" id="launch-app-btn">
                             <span>Try with a GitHub Repo</span>
-                            <span class="icon-arrow">→</span>
                         </button>
-                    </div>
-
-                    <div class="hero-features">
-                        <div class="hero-feature">
-                            <span class="feature-icon-small">⚡</span> Explains unfamiliar code instantly
-                        </div>
-                        <div class="hero-feature">
-                            <span class="feature-icon-small">🧠</span> Builds repo knowledge maps
-                        </div>
-                        <div class="hero-feature">
-                            <span class="feature-icon-small">🔍</span> Answers questions about any file
-                        </div>
                     </div>
 
                     <div class="hero-visual">
@@ -71,48 +53,8 @@
                     </div>
                 </div>
 
-                <!-- Interaction Model Showcase -->
-                <div class="interaction-showcase">
-                    <h3 class="showcase-title">Precision Workflow</h3>
-
-                    <div class="showcase-steps">
-                        <div class="showcase-step">
-                            <div class="showcase-number">01</div>
-                            <div class="showcase-content">
-                                <div class="showcase-visual">📁</div>
-                                <div class="showcase-label">Navigate</div>
-                                <p class="showcase-desc">Explore the file tree naturally.</p>
-                            </div>
-                        </div>
-
-                        <div class="showcase-arrow">→</div>
-
-                        <div class="showcase-step">
-                            <div class="showcase-number">02</div>
-                            <div class="showcase-content">
-                                <div class="showcase-visual">🎯</div>
-                                <div class="showcase-label">Select</div>
-                                <p class="showcase-desc">Highlight any block of code.</p>
-                            </div>
-                        </div>
-
-                        <div class="showcase-arrow">→</div>
-
-                        <div class="showcase-step">
-                            <div class="showcase-number">03</div>
-                            <div class="showcase-content">
-                                <div class="showcase-visual">✨</div>
-                                <div class="showcase-label">Understand</div>
-                                <p class="showcase-desc">Get instant, grounded context.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Core Features Grid -->
                 <div class="features">
                     <div class="feature-card">
-                        <span class="feature-icon">🔍</span>
                         <h3 class="feature-title">Context Review</h3>
                         <p class="feature-description">
                             RepoLogic reads the entire repository, not just the file. It understands imports,
@@ -121,7 +63,6 @@
                     </div>
 
                     <div class="feature-card">
-                        <span class="feature-icon">🛡️</span>
                         <h3 class="feature-title">Zero Hallucination</h3>
                         <p class="feature-description">
                             Built on a strict RAG architecture. Every explanation is grounded in your actual code. If
@@ -130,7 +71,6 @@
                     </div>
 
                     <div class="feature-card">
-                        <span class="feature-icon">⚡</span>
                         <h3 class="feature-title">Instant Insight</h3>
                         <p class="feature-description">
                             No chatting required. Just select code like you would in your IDE, and get an explanation
@@ -156,14 +96,13 @@
             <div class="modal space-modal" id="space-modal">
                 <div class="modal-header">
                     <h2 class="modal-title">Create New Space</h2>
-                    <button class="modal-close" id="modal-close-btn">×</button>
+                    <button class="modal-close" id="modal-close-btn">Close</button>
                 </div>
 
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">GitHub Repository URL</label>
                         <div class="input-wrapper modal-input-wrapper">
-                            <span class="input-icon">🔗</span>
                             <input type="url" id="space-repo-url" class="form-input"
                                 placeholder="github.com/owner/repository" spellcheck="false">
                         </div>
@@ -180,7 +119,6 @@
                     <button class="btn-secondary" id="modal-cancel-btn">Cancel</button>
                     <button class="btn-primary" id="create-space-btn" disabled>
                         <span>Create Space</span>
-                        <span class="icon-arrow">→</span>
                     </button>
                 </div>
             </div>
@@ -191,188 +129,147 @@
              ══════════════════════════════════════════════════ -->
         <div class="main-app hidden" id="main-app">
 
-            <!-- Spaces Sidebar -->
-            <aside class="spaces-sidebar" id="spaces-sidebar">
-                <div class="spaces-header">
-                    <span class="spaces-title">Spaces</span>
-                    <button class="btn-add-space" id="add-space-btn" title="Create New Space">+</button>
-                </div>
-                <div class="spaces-list" id="spaces-list">
-                    <!-- Dynamically populated -->
-                </div>
-            </aside>
-
-            <!-- App Content (Header + Workspace) -->
-            <div class="app-content">
-                <!-- App Header -->
-                <header class="header">
+            <!-- App Header -->
+            <header class="header">
+                <div class="header-left">
                     <button class="header-brand-btn" id="home-btn" title="Back to Home">
-                        <span class="brand-icon">◈</span>
                         <span class="brand-name">RepoLogic</span>
                     </button>
+                    <span id="repo-url-display" class="repo-url-display" title=""></span>
+                </div>
 
-                    <div class="header-input">
-                        <div class="input-wrapper">
-                            <span class="input-icon">🔗</span>
-                            <input type="url" id="repo-url-input" class="url-input"
-                                placeholder="github.com/username/repo" spellcheck="false">
-                        </div>
+                <div class="header-center"></div>
 
-                        <button id="analyze-btn" class="btn-analyze">
-                            <span class="btn-text">Analyze</span>
-                        </button>
-                    </div>
-
+                <div class="header-right">
                     <div class="header-status">
                         <div class="status-indicator">
                             <span id="status-indicator" class="status-dot"></span>
-                            <span class="pulse-ring"></span>
                         </div>
                         <span id="status-text" class="status-text">Ready</span>
                     </div>
-                </header>
+                    <button class="btn-back-start" id="back-start-btn">Back to start</button>
+                </div>
+            </header>
 
-                <!-- Main Workspace -->
-                <main class="main-layout">
+            <!-- Workspace Body -->
+            <div class="workspace">
 
-                    <!-- Left: File Explorer -->
-                    <aside class="panel panel-files" id="files-panel">
-                        <div class="panel-header">
-                            <span class="panel-icon">📂</span>
-                            <h2 class="panel-title">Explorer</h2>
-                            <span id="file-count" class="panel-badge hidden">0</span>
+                <!-- Left: File Rail Sidebar (44px) -->
+                <aside class="file-rail" id="file-rail">
+                    <div class="rail-top">
+                        <!-- Space icons populated dynamically here -->
+                        <div class="spaces-list" id="spaces-list"></div>
+                        <button class="btn-rail-action" id="add-space-btn" title="Create New Space">+</button>
+                    </div>
+                    <div class="rail-bottom">
+                        <!-- Toggle File Explorer modal -->
+                        <button class="btn-rail-action active" id="toggle-explorer-btn" title="Toggle Explorer">F</button>
+                    </div>
+                </aside>
+
+                <!-- Center/Right: Main Chat Area -->
+                <main class="chat-area">
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Dynamic conversation starts here -->
+                        <div class="chat-welcome" id="chat-welcome">
+                            <div class="welcome-text">Start by asking a question about this repository.</div>
                         </div>
+                    </div>
 
-                        <div class="panel-search-wrapper">
-                            <input type="text" id="file-search" class="search-input" placeholder="Filter files..."
-                                autocomplete="off">
-                        </div>
-
-                        <div class="empty-state" id="files-empty" style="flex: 1;">
-                            <span class="empty-icon-small">⚡</span>
-                            <p>Enter a Repo URL to begin</p>
-                        </div>
-
-                        <div id="file-tree" class="file-tree"></div>
-                    </aside>
-
-                    <!-- Resizer Left -->
-                    <div class="resizer" id="resizer-left"></div>
-
-                    <!-- Center: Code Editor/Viewer -->
-                    <section class="panel panel-code" id="code-panel">
-                        <div class="panel-header code-header">
-                            <div class="tab-active">
-                                <span class="file-icon">📄</span>
-                                <span class="panel-title" id="current-file">No file selected</span>
-                            </div>
-
-                            <div class="panel-actions">
-                                <button id="copy-btn" class="btn-icon-only" title="Copy File Content" disabled>
-                                    <span class="btn-icon">📋</span>
-                                </button>
-                                <button id="explain-btn" class="btn-explain" disabled>
-                                    <span class="btn-icon">✨</span>
-                                    <span>Explain Selection</span>
-                                    <span class="keyboard-hint"><kbd class="kbd">Ctrl</kbd><kbd
-                                            class="kbd">E</kbd></span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="code-viewer" class="code-viewer">
-                            <div class="empty-state" id="code-empty">
-                                <div class="empty-visual">
-                                    <span class="browser-dots">
-                                        <i></i><i></i><i></i>
-                                    </span>
+                    <!-- Sticky Bottom Composer -->
+                    <div class="composer-container">
+                        <div class="analysis-stepper-wrapper">
+                            <!-- Stepper (only shown during/after analysis) -->
+                            <div class="analysis-stepper hidden" id="analysis-stepper">
+                                <div class="step" id="step-ingest">
+                                    <div class="step-indicator">1</div>
+                                    <div class="step-label">Clone Repository</div>
+                                    <div class="step-status"></div>
                                 </div>
-                                <h3 class="empty-title">Ready to Explore</h3>
-                                <p class="empty-desc">Select a file from the explorer to view its contents.</p>
-                            </div>
-
-                            <!-- Code Content -->
-                            <div id="code-content" class="code-content hidden">
-                                <div class="line-numbers" id="line-numbers"></div>
-                                <pre><code id="code-text" class="code-text"></code></pre>
-                            </div>
-                        </div>
-
-                        <!-- Floating Selection Indicator -->
-                        <div class="selection-toast hidden" id="selection-info">
-                            <span class="check-icon">✓</span>
-                            <span id="selection-range" class="selection-range">Lines 12-24 selected</span>
-                        </div>
-                    </section>
-
-                    <!-- Resizer Right -->
-                    <div class="resizer" id="resizer-right"></div>
-
-                    <!-- Right: Intelligence Panel -->
-                    <aside class="panel panel-explanation" id="explanation-panel">
-                        <div class="panel-header">
-                            <span class="panel-icon">💡</span>
-                            <h2 class="panel-title">Intelligence</h2>
-                        </div>
-
-                        <!-- Q&A Module -->
-                        <div class="qa-section" id="qa-section">
-                            <div class="qa-input-wrapper">
-                                <textarea id="qa-input" class="qa-input" placeholder="Ask a question about this repo..."
-                                    rows="1" disabled></textarea>
-                                <button id="qa-btn" class="btn-qa" disabled>Ask</button>
-                            </div>
-                        </div>
-
-                        <div id="explanation-content" class="explanation-content">
-                            <div class="empty-state" id="explanation-empty">
-                                <div class="empty-visual-small">✨</div>
-                                <p class="empty-text">Select code to reveal its logic.</p>
-
-                                <!-- Interaction Steps Guide -->
-                                <div class="instruction-list" id="instruction-list">
-                                    <div class="instruction-item">
-                                        <span class="key-shortcut">1</span>
-                                        <span>Open a file</span>
-                                    </div>
-                                    <div class="instruction-item">
-                                        <span class="key-shortcut">2</span>
-                                        <span>Select code</span>
-                                    </div>
-                                    <div class="instruction-item">
-                                        <span class="key-shortcut">3</span>
-                                        <span>Click Explain</span>
-                                    </div>
+                                <div class="step" id="step-chunk">
+                                    <div class="step-indicator">2</div>
+                                    <div class="step-label">Analyze Structure</div>
+                                    <div class="step-status"></div>
+                                </div>
+                                <div class="step" id="step-embed">
+                                    <div class="step-indicator">3</div>
+                                    <div class="step-label">Generate Index</div>
+                                    <div class="step-status"></div>
+                                </div>
+                                <div class="step" id="step-ready">
+                                    <div class="step-indicator">4</div>
+                                    <div class="step-label">Ready</div>
+                                    <div class="step-status"></div>
                                 </div>
                             </div>
-
-                            <!-- Result Area -->
-                            <div id="explanation-result" class="explanation-result hidden"></div>
+                            <div id="stepper-error" class="stepper-error-banner hidden"></div>
                         </div>
 
-                        <div class="explanation-loading hidden" id="explanation-loading">
-                            <div class="loading-bar">
-                                <div class="bar-fill"></div>
-                            </div>
-                            <p class="loading-text">Analyzing logic path...</p>
+                        <div class="composer" id="composer">
+                            <textarea id="qa-input" class="qa-input" placeholder="Ask anything about this repo..." rows="1" disabled autocomplete="off"></textarea>
+                            <button id="qa-btn" class="btn-qa" disabled>Ask</button>
                         </div>
-                    </aside>
+                    </div>
                 </main>
+
             </div>
 
-            <!-- Global Components -->
+            <!-- Floating File Tree Popover Modal -->
+            <div class="file-tree-modal hidden" id="file-tree-modal">
+                <div class="modal-header">
+                    <span class="modal-title">Explorer</span>
+                    <button class="btn-close-modal" id="close-explorer-btn">Close</button>
+                </div>
+                <div class="panel-search-wrapper">
+                    <input type="text" id="file-search" class="search-input" placeholder="Filter files..." autocomplete="off">
+                </div>
+                <div class="file-tree-content">
+                    <div class="empty-state hidden" id="files-empty">
+                        <p>No files loaded.</p>
+                    </div>
+                    <div id="file-tree" class="file-tree"></div>
+                </div>
+            </div>
+
+            <!-- Hidden UI bindings for compatibility with state.js / index.js element selectors -->
+            <div style="display: none !important;">
+                <input type="url" id="repo-url-input">
+                <button id="analyze-btn"></button>
+                <div id="files-panel"></div>
+                <div id="files-empty"></div>
+                <div id="code-panel"></div>
+                <div id="current-file"></div>
+                <button id="copy-btn"></button>
+                <button id="explain-btn"></button>
+                <div id="code-viewer"></div>
+                <div id="code-empty"></div>
+                <div id="code-content"></div>
+                <div id="line-numbers"></div>
+                <pre><code id="code-text"></code></pre>
+                <div id="selection-info"></div>
+                <span id="selection-range"></span>
+                <div id="explanation-panel"></div>
+                <div id="qa-section"></div>
+                <div id="explanation-content"></div>
+                <div id="explanation-empty"></div>
+                <div id="instruction-list"></div>
+                <div id="explanation-result"></div>
+                <div id="explanation-loading"></div>
+            </div>
+
+            <!-- Global Toast Components -->
             <div id="error-toast" class="toast toast-error hidden">
-                <span class="toast-icon">⚠️</span>
                 <span id="error-message">Error message</span>
-                <button class="toast-close" onclick="hideError()">×</button>
+                <button class="toast-close" onclick="hideError()">Close</button>
             </div>
 
         </div>
+    </div>
 
-        <!-- Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-        <script src="index.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="index.js"></script>
 </body>
 
 </html>
