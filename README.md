@@ -1,60 +1,64 @@
-# 🚀 RepoLogic - AI-Powered Repository Analyzer
+# RepoLogic — Intelligent Codebase Research Tool
 
-**The IDE that explains itself.** RepoLogic turns any GitHub repository into an interactive knowledge base with AI-powered explanations, multi-project workspace management, and natural language Q&A.
+RepoLogic turns any GitHub repository into an interactive, conversation-first knowledge base. Powered by Google Gemini and FAISS semantic search, it delivers grounded code explanations, inline citation evidence, and multi-workspace repository exploration.
 
-![RepoLogic Preview](https://img.shields.io/badge/Status-Active-success)
+![Status](https://img.shields.io/badge/Status-Active-success)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## ✨ Features
+---
 
-- 🎯 **Selection-Based Explanations**: Highlight code → Click "Explain" → Get understanding
-- 💬 **Natural Language Q&A**: Ask questions about the repository without selecting code
-- 🗂️ **Multi-Project Spaces**: Manage multiple repositories with persistent sessions
-- 📁 **File Tree Navigation**: Browse repository structure like an IDE
-- 🧠 **RAG-Powered**: Uses embeddings and vector search for accurate context
-- 🎨 **Premium UI**: Beautiful dark theme with smooth animations and modern design
-- ⚡ **Fast Retrieval**: FAISS vector database for instant semantic search
-- 🔍 **Line-Number Tracking**: Precise code location awareness
-- 💾 **Session Persistence**: Your analyzed repos are saved locally
-- ⌨️ **Keyboard Shortcuts**: Ctrl+E to explain selected code
+## Key Capabilities
 
-## 🎬 How It Works
+- **Conversation-First Exploration**: Code is treated as supporting evidence directly inside conversation streams rather than requiring a separate IDE pane.
+- **Inline Citation Evidence**: Clickable source chips (`README.md:16-53`) expand syntax-highlighted code blocks with line numbers directly beneath the response.
+- **Confidence Badging**: Every response self-reports retrieval quality (`grounded`, `partial`, `insufficient_context`).
+- **4-Stage Pipeline with Live Stepper**: Clear visual feedback across repository cloning, code structure analysis, index generation, and readiness.
+- **Multi-Project Workspace Rail**: Ultra-compact 44px vertical rail with dynamic space switching and a popover file tree modal.
+- **RAG Architecture**: Recursive per-language code chunking with FAISS vector similarity search.
+- **Fail-Fast Startup Probe & Exponential Retry**: Startup sanity health check catches missing or invalid API keys before serving; embedding batch workers automatically back off on free-tier rate limits (`429 RESOURCE_EXHAUSTED`).
 
-### Multi-Space Workflow
-1. **Landing Page**: Visit RepoLogic and click "Analyze a Repository"
-2. **Create Space**: Enter a GitHub URL → Space is created automatically
-3. **Analysis**: Repository is cloned, chunked, and embedded
-4. **Explore**: Browse files, select code, and get AI explanations
-5. **Switch**: Easily switch between multiple project spaces
+---
 
-### Selection-Based Explanations
-1. **Navigate**: Browse the file tree and click to view code
-2. **Select**: Highlight any code section with your mouse
-3. **Explain**: Click "Explain Selection" or press Ctrl+E
-4. **Learn**: Get context-aware explanations with source references
+## Architecture & Pipeline
 
-### Natural Language Q&A
-1. **Ask**: Type questions like "How does authentication work?"
-2. **Get Answers**: Receive context-grounded responses with file references
-3. **Explore**: Click on source files to dive deeper
+```
+GitHub Repository
+   │
+   ▼
+[ 1. Ingest ] ──► git clone to ~/.ecode/repo_cache + file traversal
+   │
+   ▼
+[ 2. Chunk  ] ──► RecursiveCharacterTextSplitter (language-aware, line-number tracking)
+   │
+   ▼
+[ 3. Embed  ] ──► GoogleGenerativeAIEmbeddings (models/gemini-embedding-001) + FAISS Index
+   │
+   ▼
+[ 4. Query  ] ──► Vector similarity search (top-k) + Gemini LLM with structured JSON output
+```
 
-## 🛠️ Tech Stack
+---
 
-- **Backend**: Python, Flask
-- **AI/ML**: Google Gemini API, LangChain
-- **Vector DB**: FAISS
-- **Embeddings**: Google text-embedding-004
-- **Frontend**: Vanilla HTML/CSS/JavaScript
-- **Markdown**: marked.js, highlight.js
+## Tech Stack
 
-## 📋 Prerequisites
+- **Backend**: Python 3.8+, Flask, Tenacity (retry handling)
+- **AI / Embeddings**: Google Gemini API (`models/gemini-embedding-001`, `gemini-flash-lite-latest`), LangChain
+- **Vector Search**: FAISS (Facebook AI Similarity Search)
+- **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3 (IBM Plex Sans & IBM Plex Mono)
+- **Syntax Highlighting & Formatting**: highlight.js, marked.js
+
+---
+
+## Prerequisites
 
 - Python 3.8 or higher
-- Google Gemini API key ([Get it here](https://aistudio.google.com/app/apikey))
 - Git
+- Google Gemini API key ([AI Studio](https://aistudio.google.com/app/apikey))
 
-## 🚀 Quick Start
+---
+
+## Quick Start
 
 ### 1. Clone the Repository
 
@@ -67,7 +71,10 @@ cd RepoLogic
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Linux / macOS:
+source venv/bin/activate
+# Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
 ```
 
 ### 3. Install Dependencies
@@ -83,91 +90,57 @@ cp .env.example .env
 # Edit .env and add your GOOGLE_API_KEY
 ```
 
-### 5. Run the Application
+### 5. Run Application
 
 ```bash
 python app.py
 ```
 
-Open http://127.0.0.1:5000 in your browser.
-
-## 📁 Project Structure
-
-```
-RepoLogic/
-├── app.py              # Main Flask application
-├── config.py           # Configuration settings
-├── requirements.txt    # Python dependencies
-├── static/
-│   ├── index.html      # Frontend UI
-│   ├── index.css       # Premium dark theme styling
-│   └── index.js        # Frontend logic + SpaceManager
-├── tools/
-│   ├── github_loader.py    # GitHub repository handling
-│   ├── repo_ingestor.py    # Repository ingestion
-│   ├── chunker.py          # Code chunking with line numbers
-│   ├── embedder.py         # FAISS embeddings
-│   └── github_api.py       # GitHub API integration
-├── docs/               # Project documentation
-└── .env.example        # Environment template
-```
-
-## 🔧 Configuration
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GOOGLE_API_KEY` | Google Gemini API key | Yes |
-
-## 📡 API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Serve frontend |
-| `/ingest` | POST | Ingest repository |
-| `/chunk` | POST | Chunk repository files |
-| `/embed` | POST | Generate embeddings |
-| `/file-content` | GET | Get file content |
-| `/explain` | POST | Explain selected code |
-| `/ask` | POST | Answer natural language questions |
-
-## 🎨 UI Features
-
-- **Landing Page**: Professional intro with workflow showcase
-- **Multi-Space Sidebar**: Switch between projects instantly
-- **Three-Panel Layout**: Files → Code → Explanation
-- **IDE-Like Experience**: Navigate and explore code naturally
-- **Natural Language Q&A**: Ask questions in plain English
-- **Syntax Highlighting**: Language-aware code display
-- **Selection Tracking**: See exactly what lines you've selected
-- **Markdown Rendering**: Rich formatted explanations
-- **Source References**: Click to jump to referenced files
-- **Response Metadata**: See response time and chunks used
-
-## ⌨️ Keyboard Shortcuts
-
-- `Ctrl+E` / `Cmd+E` - Explain selected code
-- `Escape` - Close modals
-
-## 🔐 Security
-
-- API keys are never exposed to the client
-- Environment variables for sensitive data
-- `.gitignore` protects local files and data
-- No backend modifications to RAG pipeline
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
 ---
 
-Built with ❤️ by **Kaligotla Sri Datta Sai Vithal**
+## Project Structure
 
-Powered by Google Gemini, LangChain, and FAISS
+```
+RepoLogic/
+├── app.py                     # Main Flask application & API routes
+├── config.py                  # Global settings, paths & embedding configuration
+├── requirements.txt           # Python dependencies
+├── static/
+│   ├── index.html             # Option A conversation-first UI structure
+│   ├── index.css              # Technical dark design system (IBM Plex)
+│   └── index.js               # Client orchestration, spaces & inline citations
+├── tools/
+│   ├── github_loader.py       # Repository cloning & git utilities
+│   ├── repo_ingestor.py       # File structure traversal & filtering
+│   ├── chunker.py             # Language-aware chunking with line preservation
+│   ├── embedder.py            # FAISS vector store & resilient batch embedding
+│   └── github_api.py          # GitHub API integration
+├── tests/
+│   └── test_startup_health.py # Startup key probe unit tests
+└── .env.example               # Environment template
+```
+
+---
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Serves the web interface |
+| `/ingest` | POST | Clones and indexes repository file list |
+| `/chunk` | POST | Chunks source code with line tracking |
+| `/embed` | POST | Generates embeddings and builds the FAISS index |
+| `/status` | GET | Checks ingestion and embedding progress state |
+| `/file-content`| GET | Retrieves raw file content for code evidence |
+| `/ask` | POST | Answers natural language questions with source citations |
+| `/explain` | POST | Explains selected code ranges in context |
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+Built by **Kaligotla Sri Datta Sai Vithal**
