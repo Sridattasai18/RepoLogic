@@ -6,32 +6,13 @@ Chunks files while preserving exact line number ranges
 import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
-from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from .constants import LANGUAGE_MAP
 from config import Config
 import json
 import re
 
 logger = logging.getLogger(__name__)
-
-# Language to extension mapping (from existing vector_store.py)
-LANGUAGE_MAP = {
-    '.py': Language.PYTHON,
-    '.js': Language.JS,
-    '.ts': Language.TS,
-    '.java': Language.JAVA,
-    '.cpp': Language.CPP,
-    '.c': Language.C,
-    '.cs': Language.CSHARP,
-    '.go': Language.GO,
-    '.rs': Language.RUST,
-    '.php': Language.PHP,
-    '.rb': Language.RUBY,
-    '.swift': Language.SWIFT,
-    '.kt': Language.KOTLIN,
-    '.scala': Language.SCALA,
-    '.html': Language.HTML,
-    '.md': Language.MARKDOWN,
-}
 
 
 class LineNumberChunk:

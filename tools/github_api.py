@@ -8,6 +8,7 @@ import logging
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 import time
+from .constants import IGNORE_DIRS
 
 logger = logging.getLogger(__name__)
 
@@ -162,8 +163,6 @@ def build_file_tree(repo_path: Path, max_depth: int = 5) -> Dict[str, Any]:
             ]
         }
     """
-    IGNORE_DIRS = {'.git', 'node_modules', '__pycache__', 'venv', 'env', 
-                   'build', 'dist', 'target', 'bin', '.idea', '.vscode'}
     
     def get_file_type_category(extension: str) -> str:
         """Categorize file by extension"""

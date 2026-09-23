@@ -21,6 +21,7 @@ import time
 import numpy as np
 import faiss
 import pickle
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -39,6 +40,25 @@ from config import Config
 from tools.chunker import LineNumberChunk, ChunkStore
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=8)
+def _load_index_cached(
+    index_path_str: str,
+    chunks_path_str: str,
+    mtime_index: float,
+    mtime_chunks: float,
+):
+    """
+    Load FAISS index + chunk list from disk, cached by file path and mtime.
+    Cache auto-invalidates when either file is modified (e.g. after re-embedding).
+    ponytail: global LRU, per-process — fine for single-worker Flask dev server;
+              add per-process isolation if multi-worker gunicorn is used.
+    """
+    index = faiss.read_index(index_path_str)
+    with open(chunks_path_str, "rb") as f:
+        chunks = pickle.load(f)
+    return index, chunks
 
 def is_retryable_error(e: Exception) -> bool:
     """Check if the exception is a rate limit or transient error."""
@@ -289,30 +309,27 @@ class EmbeddingStore:
             logger.error(f"No index found for {repo_id}")
             return []
 
-        try:
-            index_path = self.storage_dir / f"{repo_id}.faiss"
-            index = faiss.read_index(str(index_path))
+        index_path = self.storage_dir / f"{repo_id}.faiss"
+        chunks_path = self.storage_dir / f"{repo_id}_chunks.pkl"
 
-            chunks_path = self.storage_dir / f"{repo_id}_chunks.pkl"
-            with open(chunks_path, "rb") as f:
-                chunks = pickle.load(f)
+        # Use mtime-keyed cache to avoid disk I/O on every query
+        index, chunks = _load_index_cached(
+            str(index_path), str(chunks_path),
+            index_path.stat().st_mtime, chunks_path.stat().st_mtime,
+        )
 
-            model = self._get_embeddings_model()
-            query_embedding = np.array([model.embed_query(query)], dtype="float32")
+        model = self._get_embeddings_model()
+        query_embedding = np.array([model.embed_query(query)], dtype="float32")
 
-            distances, indices = index.search(query_embedding, min(k, len(chunks)))
+        distances, indices = index.search(query_embedding, min(k, len(chunks)))
 
-            results = []
-            for dist, idx in zip(distances[0], indices[0]):
-                if idx < len(chunks):
-                    results.append((chunks[idx], float(dist)))
+        results = []
+        for dist, idx in zip(distances[0], indices[0]):
+            if idx < len(chunks):
+                results.append((chunks[idx], float(dist)))
 
-            logger.info(f"Found {len(results)} similar chunks for query")
-            return results
-
-        except Exception as e:
-            logger.error(f"Search failed: {e}", exc_info=True)
-            return []
+        logger.info(f"Found {len(results)} similar chunks for query")
+        return results
 
     # ── selection-based retrieval ───────────────────────────────────────────
     def search_by_selection(

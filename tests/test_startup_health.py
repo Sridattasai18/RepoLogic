@@ -42,6 +42,12 @@ def _reload_app_with_embed_side_effect(side_effect):
     with patch(
         "langchain_google_genai.GoogleGenerativeAIEmbeddings",
         return_value=mock_embeddings_instance,
+    ), patch(
+        "config.Config.GOOGLE_API_KEY",
+        new="test-api-key-for-unit-tests",
+    ), patch(
+        "langchain_google_genai.ChatGoogleGenerativeAI",
+        return_value=MagicMock(),
     ):
         app_module = importlib.import_module("app")
 

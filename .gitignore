@@ -10,10 +10,12 @@ __pycache__/
 
 # Data directory (cached repos, chunks, embeddings)
 data/
+.ecode/
 
 # Vector database (contains indexed repositories)
 vector_store/
 repos/
+repo_cache/
 
 # Logs
 *.log
@@ -51,3 +53,10 @@ htmlcov/
 
 # Local development
 .local/
+
+# Test files (temporary)
+test_*.html
+test_*.js
+test_*.json
+verify_*.html
+landing_verification.md

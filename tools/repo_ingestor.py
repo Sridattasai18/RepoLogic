@@ -7,37 +7,15 @@ import os
 import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+from .constants import (
+    IGNORE_DIRS, INCLUDED_EXTENSIONS, CODE_EXTENSIONS, TEXT_EXTENSIONS, DETECT_LANGUAGE_MAP
+)
 from .github_api import GitHubAPI, parse_github_url
 from .github_loader import validate_github_url, _normalize_github_url, get_repo_id
 from config import Config
 import git
 
 logger = logging.getLogger(__name__)
-
-# Code file extensions to include
-CODE_EXTENSIONS = {
-    '.py', '.js', '.jsx', '.ts', '.tsx', '.java', '.cpp', '.c', '.h', '.hpp',
-    '.go', '.rs', '.rb', '.php', '.swift', '.kt', '.scala', '.cs', '.r',
-    '.m', '.mm', '.sh', '.bash', '.sql', '.html', '.css', '.scss', '.sass',
-    '.vue', '.svelte', '.lua', '.pl', '.pm', '.jl', '.R'
-}
-
-# Additional text files to include
-TEXT_EXTENSIONS = {
-    '.md', '.txt', '.rst', '.json', '.yaml', '.yml', '.toml', '.ini',
-    '.cfg', '.conf', '.xml', '.env.example'
-}
-
-INCLUDED_EXTENSIONS = CODE_EXTENSIONS | TEXT_EXTENSIONS
-
-# Directories to ignore
-IGNORE_DIRS = {
-    '.git', 'node_modules', '__pycache__', 'venv', 'env', 'virtualenv',
-    'build', 'dist', 'target', 'bin', 'obj', '.idea', '.vscode', '.vs',
-    'vendor', 'packages', '.next', '.nuxt', 'coverage', '.pytest_cache',
-    '.mypy_cache', '.tox', 'eggs', '.eggs', 'lib', 'lib64', 'parts',
-    'sdist', 'wheels', '*.egg-info', '.cache'
-}
 
 
 def count_lines(file_path: Path) -> int:
@@ -51,43 +29,7 @@ def count_lines(file_path: Path) -> int:
 
 def detect_language(file_path: Path) -> str:
     """Detect programming language from file extension"""
-    ext = file_path.suffix.lower()
-    
-    language_map = {
-        '.py': 'Python',
-        '.js': 'JavaScript',
-        '.jsx': 'JavaScript',
-        '.ts': 'TypeScript',
-        '.tsx': 'TypeScript',
-        '.java': 'Java',
-        '.cpp': 'C++',
-        '.c': 'C',
-        '.h': 'C/C++',
-        '.hpp': 'C++',
-        '.go': 'Go',
-        '.rs': 'Rust',
-        '.rb': 'Ruby',
-        '.php': 'PHP',
-        '.swift': 'Swift',
-        '.kt': 'Kotlin',
-        '.scala': 'Scala',
-        '.cs': 'C#',
-        '.r': 'R',
-        '.R': 'R',
-        '.html': 'HTML',
-        '.css': 'CSS',
-        '.scss': 'SCSS',
-        '.vue': 'Vue',
-        '.sh': 'Shell',
-        '.bash': 'Shell',
-        '.sql': 'SQL',
-        '.md': 'Markdown',
-        '.json': 'JSON',
-        '.yaml': 'YAML',
-        '.yml': 'YAML',
-    }
-    
-    return language_map.get(ext, 'Unknown')
+    return DETECT_LANGUAGE_MAP.get(file_path.suffix.lower(), 'Unknown')
 
 
 def classify_file_type(file_path: Path) -> str:

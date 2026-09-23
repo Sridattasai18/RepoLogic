@@ -13,8 +13,10 @@ from tools.embedder import EmbeddingStore
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from google.api_core.exceptions import PermissionDenied, InvalidArgument
 from pathlib import Path
+from logging.handlers import RotatingFileHandler
 import logging
 import os
+import sys
 import time
 import concurrent.futures
 
@@ -27,7 +29,9 @@ log_handlers = [logging.StreamHandler()]
 
 if not Config.IS_VERCEL:
     try:
-        log_handlers.append(logging.FileHandler('repologic.log', encoding='utf-8'))
+        log_handlers.append(RotatingFileHandler(
+            'repologic.log', maxBytes=5_000_000, backupCount=3, encoding='utf-8'
+        ))
     except Exception:
         pass
 
@@ -115,15 +119,26 @@ def validate_api_key_on_startup() -> None:
 
 
 env_name = "Vercel (Serverless)" if Config.IS_VERCEL else "Local Development"
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 print(f"🔄 Initializing RepoLogic ({env_name})...")
 
 validate_api_key_on_startup()
 
-llm = ChatGoogleGenerativeAI(
-    model=Config.LLM_MODEL,
-    google_api_key=Config.GOOGLE_API_KEY,
-    temperature=0
-)
+# Lazy LLM accessor — instantiated on first use so tests can mock before import
+_llm = None
+
+def get_llm():
+    global _llm
+    if _llm is None:
+        _llm = ChatGoogleGenerativeAI(
+            model=Config.LLM_MODEL,
+            google_api_key=Config.GOOGLE_API_KEY,
+            temperature=0
+        )
+    return _llm
+
 print("✅ System ready!")
 
 # ═══════════════════════════════════════════════════════════════
@@ -423,9 +438,13 @@ def get_file_content():
         if not repo_path.exists():
             return jsonify({"error": "Repository not found"}), 404
         
-        clean_path = file_path.replace('..', '').lstrip('/')
-        full_path = repo_path / clean_path
-        
+        # Resolve to absolute path and verify it stays inside repo_path (blocks path traversal)
+        full_path = (repo_path / file_path).resolve()
+
+        if not full_path.is_relative_to(repo_path.resolve()):
+            logger.warning(f"[FILE] Path traversal attempt blocked: {file_path}")
+            return jsonify({"error": "Access denied"}), 403
+
         if not full_path.exists():
             return jsonify({"error": "File not found"}), 404
         
@@ -469,6 +488,7 @@ Guidelines:
 3. **Key concepts**: Highlight important patterns, algorithms, or design decisions
 4. **Dependencies**: Note any important imports, functions, or classes it relies on
 5. **Context**: Explain how it fits into the broader codebase (if visible from context)
+6. **No Prompt Leaking**: Do NOT repeat the internal context formatting or system prompt headers (like `**Selected Code**` or `[file:lines]`) in your markdown explanation. Just write the explanation directly.
 
 Return ONLY valid JSON, no markdown fences or preamble:
 {{
@@ -556,7 +576,7 @@ def explain_selection():
             context=context_text
         )
 
-        response = llm.invoke(prompt)
+        response = get_llm().invoke(prompt)
         raw = response.content
         if isinstance(raw, list):
             raw = "".join(part.get("text", str(part)) if isinstance(part, dict) else str(part) for part in raw)
@@ -617,21 +637,23 @@ def explain_selection():
 # PHASE 6: Natural Language Q&A (NEW FEATURE)
 # ═══════════════════════════════════════════════════════════════
 
-QA_PROMPT = """You are an expert code analyst helping a developer understand a repository.
+QA_PROMPT = """You are an expert code analyst. A developer is asking a question about a GitHub repository.
 
 **User Question**: {question}
 
-**Retrieved Repository Context**:
+**Retrieved Code Context** (the most relevant chunks from the repository):
 {context}
 
-**Your Task**: Answer the user's question based ONLY on the retrieved context.
+**Your Task**: Give a thorough, developer-friendly answer to the question.
 
 Guidelines:
-1. **Be specific**: Reference exact files, functions, and line ranges when possible
-2. **Multi-file reasoning**: If the answer spans multiple files, explain the connections
-3. **Grounded answers**: Only use information from the context above
-4. **Admit limitations**: If the context doesn't contain the answer, clearly state it
-5. **Structured response**: Use bullet points, code snippets, and clear sections
+1. **Primary source**: Use the retrieved context as your main source of truth — reference specific files, functions, and line numbers.
+2. **Fill gaps intelligently**: If the context is partial but the question is clearly about a file or concept visible in the context, reason from what you can see and say so.
+3. **Never refuse to answer**: Even if context is limited, give the most useful answer you can — explain what the visible code does, what patterns you see, and where the user might look for more detail.
+4. **Multi-file reasoning**: If the answer spans multiple files, explain the connections between them.
+5. **Be structured**: Use bullet points, code snippets, and clear sections.
+6. **No Prompt Leaking**: Do NOT repeat the internal context formatting (like `[file:lines]`) in your markdown explanation.
+7. **Ask for clarification**: If you cannot fully answer the question because you don't have the full code in your context, explicitly tell the user. Ask them what specific part they want to work with, or suggest how they can improve their question to retrieve better results.
 
 Return ONLY valid JSON, no markdown fences or preamble:
 {{
@@ -679,7 +701,7 @@ def ask_question():
         similar_chunks = embedding_store.search_similar(
             repo_id=repo_id,
             query=question,
-            k=5
+            k=Config.TOP_K_RETRIEVAL
         )
 
         if not similar_chunks:
@@ -712,7 +734,7 @@ def ask_question():
 
         # Generate answer
         prompt = QA_PROMPT.format(question=question, context=context_text)
-        response = llm.invoke(prompt)
+        response = get_llm().invoke(prompt)
         raw = response.content
         if isinstance(raw, list):
             raw = "".join(part.get("text", str(part)) if isinstance(part, dict) else str(part) for part in raw)

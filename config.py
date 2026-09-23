@@ -9,7 +9,7 @@ class Config:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
     # Models
-    LLM_MODEL = "gemini-flash-lite-latest"
+    LLM_MODEL = "gemini-3.5-flash-lite"  # pinned; 2.5-flash-lite is 404 for new users per API error
     EMBEDDING_MODEL = "models/gemini-embedding-001"
 
     # Environment detection
@@ -34,7 +34,7 @@ class Config:
     # Retrieval
     CHUNK_SIZE = 600
     CHUNK_OVERLAP = 50
-    TOP_K_RETRIEVAL = 5
+    TOP_K_RETRIEVAL = 20
     
     # API Settings
     REQUEST_TIMEOUT = 10  # seconds

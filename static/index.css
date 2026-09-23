@@ -125,6 +125,14 @@ button {
     margin-bottom: var(--space-6);
 }
 
+.hero-flow {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    margin-top: var(--space-4);
+    font-family: var(--font-code);
+    letter-spacing: 0.01em;
+}
+
 .hero-actions {
     display: flex;
     justify-content: center;
@@ -150,6 +158,8 @@ button {
     border-radius: 4px;
     overflow: hidden;
     background-color: var(--bg-elevated);
+    max-width: 920px;
+    margin: 0 auto;
 }
 
 .hero-image {
@@ -185,6 +195,67 @@ button {
     color: var(--text-secondary);
     font-size: 12px;
     line-height: 1.5;
+}
+
+.how-it-works {
+    margin-top: var(--space-8);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--border);
+}
+
+.how-it-works-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: var(--space-6);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+.how-it-works-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+}
+
+.step-card {
+    flex: 1;
+    max-width: 200px;
+    text-align: center;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    padding: var(--space-5);
+    border-radius: 4px;
+}
+
+.step-number {
+    font-family: var(--font-code);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: var(--space-2);
+}
+
+.step-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.step-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.step-arrow {
+    font-size: 20px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
 }
 
 .landing-footer {
@@ -291,6 +362,16 @@ button {
 .form-hint {
     font-size: 11px;
     color: var(--text-tertiary);
+}
+
+.form-hint-code {
+    font-family: var(--font-code);
+    font-size: 11px;
+    color: var(--text-secondary);
+    background-color: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
 }
 
 .space-preview {
@@ -696,7 +777,7 @@ button {
     padding-top: var(--space-3);
 }
 
-.file-refs-header, .sources-header {
+.file-refs-header {
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 600;
@@ -736,46 +817,6 @@ button {
     color: var(--text-tertiary);
 }
 
-/* Sources section */
-.sources-section {
-    margin-top: var(--space-4);
-    padding-top: var(--space-3);
-}
-
-.sources-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-}
-
-.source-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    font-family: var(--font-code);
-    font-size: 11px;
-    color: var(--text-secondary);
-}
-
-.source-icon {
-    font-size: 10px;
-    color: var(--text-tertiary);
-}
-
-.source-file {
-    font-weight: 500;
-}
-
-.source-lines {
-    color: var(--accent-info);
-}
-
-.source-type {
-    font-size: 10px;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-}
-
 /* Inline Code Citation Block (The Signature Element) */
 .inline-code-citation-block {
     margin-top: var(--space-3);
@@ -813,7 +854,8 @@ button {
     background-color: var(--bg-elevated);
     border-right: 1px solid var(--border);
     font-family: var(--font-code);
-    font-size: 11px;
+    font-size: 12px;
+    line-height: 1.5;
     color: var(--text-tertiary);
     text-align: right;
     user-select: none;
@@ -831,6 +873,7 @@ button {
 .citation-code-text {
     font-family: var(--font-code);
     font-size: 12px;
+    line-height: 1.5;
     white-space: pre;
     color: var(--text-primary);
 }
@@ -936,82 +979,68 @@ button {
     cursor: not-allowed;
 }
 
-/* Stepper inside composer container */
-.analysis-stepper {
+/* Large centered loading status */
+.loading-status {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
-    background-color: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: var(--space-3);
-}
-
-.step {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: 4px 0;
-}
-
-.step-indicator {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border);
-    display: flex;
     align-items: center;
     justify-content: center;
+    gap: var(--space-6);
+    padding: var(--space-8) var(--space-4);
+    min-height: 120px;
+}
+
+.loading-status-text {
     font-family: var(--font-code);
-    font-size: 10px;
-    color: var(--text-tertiary);
-}
-
-.step.active .step-indicator {
-    background-color: var(--bg-surface);
-    border-color: var(--accent);
-    color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
-    animation: step-pulse 1.2s ease-in-out infinite;
-}
-
-.step.completed .step-indicator {
-    background-color: var(--text-tertiary);
-    border-color: var(--text-tertiary);
-    color: var(--bg-surface);
-}
-
-.step.failed .step-indicator {
-    background-color: var(--accent-error);
-    border-color: var(--accent-error);
-    color: #fff;
-}
-
-@keyframes step-pulse {
-    0%, 100% { box-shadow: 0 0 0 2px var(--accent); }
-    50%       { box-shadow: 0 0 0 2px transparent; }
-}
-
-.step-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.step.active .step-label {
-    color: var(--text-primary);
+    font-size: 18px;
     font-weight: 500;
+    color: var(--text-primary);
+    text-align: center;
+    letter-spacing: 0.02em;
 }
 
-.step-status {
-    margin-left: auto;
-    font-family: var(--font-code);
-    font-size: 11px;
-    color: var(--text-tertiary);
+.loading-progress-container {
+    width: 100%;
+    max-width: 320px;
 }
 
-.step.active .step-status {
-    color: var(--accent);
+.loading-progress-bar {
+    width: 100%;
+    height: 3px;
+    background-color: var(--bg-surface);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-progress-fill {
+    height: 100%;
+    background-color: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease-in-out;
+    width: 0%;
+}
+
+.loading-progress-fill.indeterminate {
+    width: 30%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--accent) 50%, 
+        transparent 100%);
+    animation: loading-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(300%);
+    }
+}
+
+/* Old stepper styles - keep for error banner but hide stepper */
+.analysis-stepper {
+    display: none !important;
 }
 
 .stepper-error-banner {
@@ -1042,23 +1071,13 @@ button {
    ═══════════════════════════════════════════════════════════════ */
 
 .file-tree-modal {
-    position: fixed;
-    top: 56px;
-    left: 44px;
-    bottom: 0;
-    width: 320px;
-    background-color: var(--bg-elevated);
-    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    z-index: 1000;
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
-    animation: slideInLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideInLeft {
-    from { transform: translateX(-10px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    width: 260px;
+    height: 100%;
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    z-index: 10;
 }
 
 .file-tree-modal .modal-header {
@@ -1092,26 +1111,42 @@ button {
     gap: 2px;
 }
 
-.file-item {
+.file-item, .tree-folder-row {
     display: flex;
     align-items: center;
     padding: 6px 8px;
-    border-radius: 4px;
-    cursor: pointer;
     font-family: var(--font-code);
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
     transition: all 0.15s;
 }
 
-.file-item:hover {
+.file-item:hover, .tree-folder-row:hover {
     background-color: var(--bg-surface);
     color: var(--text-primary);
 }
 
-.file-item.active {
+.file-item.active, .tree-folder-row.active {
     background-color: var(--bg-surface);
     color: var(--accent);
+}
+
+.tree-chevron {
+    display: inline-block;
+    width: 12px;
+    font-size: 8px;
+    text-align: center;
+    margin-right: 4px;
+    transition: transform 0.2s;
+    transform: rotate(0deg); /* down by default (open) */
+}
+
+.tree-children {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .file-indent {
@@ -1132,7 +1167,7 @@ button {
     white-space: nowrap;
 }
 
-/* ─── Global Error Toast ─── */
+/* Global Toast Components */
 .toast {
     position: fixed;
     bottom: var(--space-6);
@@ -1157,6 +1192,46 @@ button {
 
 .toast-close:hover {
     color: var(--text-primary);
+}
+
+/* Explorer Tooltip Notification */
+.explorer-tooltip {
+    position: fixed;
+    z-index: 2100;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--accent);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: var(--space-3) var(--space-4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.explorer-tooltip.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.tooltip-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+}
+
+.tooltip-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.tooltip-text {
+    font-size: 12px;
+    font-family: var(--font-ui);
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 /* Scrollbar styling */
@@ -1201,5 +1276,14 @@ button {
     .file-tree-modal {
         left: 44px;
         width: calc(100vw - 44px);
+    }
+    .how-it-works-steps {
+        flex-direction: column;
+    }
+    .step-arrow {
+        transform: rotate(90deg);
+    }
+    .step-card {
+        max-width: 100%;
     }
 }

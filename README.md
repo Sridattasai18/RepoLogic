@@ -1,6 +1,8 @@
-# RepoLogic — Intelligent Codebase Research Tool
+# RepoLogic — AI-Powered Codebase Analysis
 
-RepoLogic turns any GitHub repository into an interactive, conversation-first knowledge base. Powered by Google Gemini and FAISS semantic search, it delivers grounded code explanations, inline citation evidence, and multi-workspace repository exploration.
+**Understand any GitHub repository in minutes.**
+
+RepoLogic is an AI-powered codebase analysis tool for faster developer onboarding. It transforms GitHub repositories into interactive knowledge bases with grounded explanations, inline code citations, and intelligent navigation.
 
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
@@ -8,139 +10,228 @@ RepoLogic turns any GitHub repository into an interactive, conversation-first kn
 
 ---
 
-## Key Capabilities
+## ✨ Key Features
 
-- **Conversation-First Exploration**: Code is treated as supporting evidence directly inside conversation streams rather than requiring a separate IDE pane.
-- **Inline Citation Evidence**: Clickable source chips (`README.md:16-53`) expand syntax-highlighted code blocks with line numbers directly beneath the response.
-- **Confidence Badging**: Every response self-reports retrieval quality (`grounded`, `partial`, `insufficient_context`).
-- **4-Stage Pipeline with Live Stepper**: Clear visual feedback across repository cloning, code structure analysis, index generation, and readiness.
-- **Multi-Project Workspace Rail**: Ultra-compact 44px vertical rail with dynamic space switching and a popover file tree modal.
-- **RAG Architecture**: Recursive per-language code chunking with FAISS vector similarity search.
-- **Fail-Fast Startup Probe & Exponential Retry**: Startup sanity health check catches missing or invalid API keys before serving; embedding batch workers automatically back off on free-tier rate limits (`429 RESOURCE_EXHAUSTED`).
+### **Full Repository Context**
+RepoLogic analyzes the repository structure, files, dependencies, and code relationships to build a complete understanding of the project.
+
+### **Grounded Analysis**
+RAG-based analysis keeps explanations connected to the actual code instead of relying only on general model knowledge. Every answer includes:
+- **Confidence badges** (`grounded`, `partial`, `insufficient_context`)
+- **Inline citations** with clickable source chips
+- **Syntax-highlighted code blocks** with line numbers
+
+### **Instant Code Insight**
+- Click any file to view it in the chat
+- Select code and get contextual explanations
+- Navigate through the file tree with visual feedback
+- Multi-workspace support for managing multiple repositories
+
+### **Developer-First UX**
+- **Auto-opening file explorer** when repository is ready
+- **Smart loading states** with large, centered progress indicators
+- **Interactive tooltips** for first-time guidance
+- **Confirmation dialogs** to prevent accidental actions
+- **Clean, professional design** optimized for developers
 
 ---
 
-## Architecture & Pipeline
+## 🎯 How It Works
+
+```
+01. CONNECT                02. ANALYZE                   03. UNDERSTAND
+Paste a public      →      RepoLogic indexes the   →    Explore files and get
+GitHub repository          repository and builds         AI explanations grounded
+                           searchable context            in the code
+```
+
+### Pipeline Architecture
 
 ```
 GitHub Repository
    │
    ▼
-[ 1. Ingest ] ──► git clone to ~/.ecode/repo_cache + file traversal
+[ 1. Ingest ] ──► Git clone + file traversal + metadata extraction
    │
    ▼
-[ 2. Chunk  ] ──► RecursiveCharacterTextSplitter (language-aware, line-number tracking)
+[ 2. Chunk  ] ──► Language-aware code splitting with line tracking
    │
    ▼
-[ 3. Embed  ] ──► GoogleGenerativeAIEmbeddings (models/gemini-embedding-001) + FAISS Index
+[ 3. Embed  ] ──► Vector embeddings (Gemini) + FAISS indexing
    │
    ▼
-[ 4. Query  ] ──► Vector similarity search (top-k) + Gemini LLM with structured JSON output
+[ 4. Query  ] ──► Semantic search + LLM analysis with citations
 ```
 
 ---
 
-## Tech Stack
+## 🚀 Quick Start
 
-- **Backend**: Python 3.8+, Flask, Tenacity (retry handling)
-- **AI / Embeddings**: Google Gemini API (`models/gemini-embedding-001`, `gemini-flash-lite-latest`), LangChain
-- **Vector Search**: FAISS (Facebook AI Similarity Search)
-- **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3 (IBM Plex Sans & IBM Plex Mono)
-- **Syntax Highlighting & Formatting**: highlight.js, marked.js
-
----
-
-## Prerequisites
+### Prerequisites
 
 - Python 3.8 or higher
 - Git
-- Google Gemini API key ([AI Studio](https://aistudio.google.com/app/apikey))
+- Google Gemini API key ([Get one here](https://aistudio.google.com/app/apikey))
 
----
+### Installation
 
-## Quick Start
-
-### 1. Clone the Repository
-
+1. **Clone the repository**
 ```bash
 git clone https://github.com/Sridattasai18/RepoLogic.git
 cd RepoLogic
 ```
 
-### 2. Create Virtual Environment
-
+2. **Create virtual environment**
 ```bash
 python -m venv venv
-# Linux / macOS:
+
+# Linux/macOS:
 source venv/bin/activate
-# Windows (PowerShell):
+
+# Windows:
 .\venv\Scripts\Activate.ps1
 ```
 
-### 3. Install Dependencies
-
+3. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment
-
+4. **Configure API key**
 ```bash
 cp .env.example .env
 # Edit .env and add your GOOGLE_API_KEY
 ```
 
-### 5. Run Application
-
+5. **Run the application**
 ```bash
 python app.py
 ```
 
-Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
+6. **Open in browser**
+```
+http://127.0.0.1:5000
+```
 
 ---
 
-## Project Structure
+## 💡 Usage
+
+1. **Create a Space**: Click "Try with a GitHub Repo"
+2. **Enter Repository URL**: e.g., `https://github.com/facebook/react`
+3. **Wait for Analysis**: Watch the progress indicator
+4. **Explore**: File explorer opens automatically
+5. **Ask Questions**: Use natural language queries
+6. **View Code**: Click files or citations to see code
+
+---
+
+## 🏗️ Project Structure
 
 ```
 RepoLogic/
-├── app.py                     # Main Flask application & API routes
-├── config.py                  # Global settings, paths & embedding configuration
+├── app.py                     # Flask app & API routes
+├── config.py                  # Configuration & settings
 ├── requirements.txt           # Python dependencies
+├── .env.example              # Environment template
 ├── static/
-│   ├── index.html             # Option A conversation-first UI structure
-│   ├── index.css              # Technical dark design system (IBM Plex)
-│   └── index.js               # Client orchestration, spaces & inline citations
+│   ├── index.html            # Landing page & app UI
+│   ├── index.css             # Design system (dark theme, IBM Plex)
+│   └── index.js              # Frontend logic & interactions
 ├── tools/
-│   ├── github_loader.py       # Repository cloning & git utilities
-│   ├── repo_ingestor.py       # File structure traversal & filtering
-│   ├── chunker.py             # Language-aware chunking with line preservation
-│   ├── embedder.py            # FAISS vector store & resilient batch embedding
-│   └── github_api.py          # GitHub API integration
-├── tests/
-│   └── test_startup_health.py # Startup key probe unit tests
-└── .env.example               # Environment template
+│   ├── github_loader.py      # Repository cloning
+│   ├── repo_ingestor.py      # File structure analysis
+│   ├── chunker.py            # Code splitting with line numbers
+│   ├── embedder.py           # FAISS vector store & embeddings
+│   └── github_api.py         # GitHub API integration
+└── tests/
+    ├── test_startup_health.py # Health check tests
+    └── test_path_traversal.py # Security tests
 ```
 
 ---
 
-## API Endpoints
+## 🔌 API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/` | GET | Serves the web interface |
-| `/ingest` | POST | Clones and indexes repository file list |
-| `/chunk` | POST | Chunks source code with line tracking |
-| `/embed` | POST | Generates embeddings and builds the FAISS index |
-| `/status` | GET | Checks ingestion and embedding progress state |
-| `/file-content`| GET | Retrieves raw file content for code evidence |
-| `/ask` | POST | Answers natural language questions with source citations |
-| `/explain` | POST | Explains selected code ranges in context |
+| `/` | GET | Serves web interface |
+| `/health` | GET | Health check & API key validation |
+| `/ingest` | POST | Clone repository & extract file list |
+| `/chunk` | POST | Split code into searchable chunks |
+| `/embed` | POST | Generate vector embeddings |
+| `/status` | GET | Check analysis progress |
+| `/file-content` | GET | Retrieve file content |
+| `/ask` | POST | Answer questions with citations |
+| `/explain` | POST | Explain selected code |
 
 ---
 
-## License
+## 🛠️ Tech Stack
+
+**Backend**
+- Python 3.8+, Flask
+- Google Gemini API (embeddings + generation)
+- LangChain, FAISS
+- Tenacity (retry handling)
+
+**Frontend**
+- Vanilla JavaScript (ES6+)
+- HTML5, CSS3
+- IBM Plex Sans & Mono fonts
+- Highlight.js, Marked.js, DOMPurify
+
+**Infrastructure**
+- Git integration
+- Vector similarity search
+- RAG (Retrieval-Augmented Generation)
+
+---
+
+## 🎨 Design Philosophy
+
+RepoLogic follows a **developer-tool aesthetic**:
+- Dark, restrained color scheme
+- Green accent (#1ed760) for emphasis
+- IBM Plex typeface for technical clarity
+- Minimal animations, maximum information density
+- No gradients, glowing effects, or unnecessary decoration
+
+The interface prioritizes **immediate understanding**:
+- Large, readable text for loading states
+- Clear visual hierarchy
+- Inline code evidence
+- Contextual tooltips
+
+---
+
+## 🔒 Security
+
+- API keys stored in `.env` (never committed)
+- Path traversal prevention
+- Input validation on all endpoints
+- Secure file operations
+- Rate limiting on embeddings
+
+---
+
+## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
-Built by **Kaligotla Sri Datta Sai Vithal**
+---
+
+## 👤 Author
+
+**Kaligotla Sri Datta Sai Vithal**
+
+Built with ❤️ for developers who want to understand codebases faster.
+
+---
+
+## 🙏 Acknowledgments
+
+- Google Gemini for powerful embeddings and generation
+- Facebook FAISS for efficient vector search
+- IBM Plex for beautiful developer fonts
+- The open-source community

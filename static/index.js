@@ -169,19 +169,9 @@ const elements = {
     createSpaceBtn: document.getElementById('create-space-btn'),
     modalCloseBtn: document.getElementById('modal-close-btn'),
     modalCancelBtn: document.getElementById('modal-cancel-btn'),
-    // Dummy fields for backend compatibility
-    repoUrlInput: document.createElement('input'),
-    analyzeBtn: document.createElement('button'),
-    explanationLoading: document.createElement('div'),
-    explanationResult: document.createElement('div'),
-    explanationEmpty: document.createElement('div'),
     errorToast: document.getElementById('error-toast'),
     errorMessage: document.getElementById('error-message')
 };
-
-// Bind analysis dummy buttons
-elements.repoUrlInput.id = 'dummy-repo-url-input';
-elements.analyzeBtn.id = 'dummy-analyze-btn';
 
 // ══════════════════════════════════════════════════════════════
 // Status & Error
@@ -232,24 +222,65 @@ function escapeHtml(text) {
 
 function toggleExplorer() {
     elements.fileTreeModal.classList.toggle('hidden');
-    if (!elements.fileTreeModal.classList.contains('hidden')) {
+    const isOpen = !elements.fileTreeModal.classList.contains('hidden');
+    
+    if (isOpen) {
         elements.fileSearch.focus();
+        if (elements.toggleExplorerBtn) {
+            elements.toggleExplorerBtn.classList.add('active');
+        }
+    } else {
+        if (elements.toggleExplorerBtn) {
+            elements.toggleExplorerBtn.classList.remove('active');
+        }
     }
+    
+    // Show notification on first toggle (only once per session)
+    if (!sessionStorage.getItem('explorerTooltipShown')) {
+        showExplorerTooltip();
+        sessionStorage.setItem('explorerTooltipShown', 'true');
+    }
+}
+
+function showExplorerTooltip() {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'explorer-tooltip';
+    tooltip.innerHTML = `
+        <div class="tooltip-content">
+            <span class="tooltip-icon">💡</span>
+            <span class="tooltip-text">Click the 📁 button to toggle the file explorer</span>
+        </div>
+    `;
+    document.body.appendChild(tooltip);
+    
+    // Position near the toggle button
+    if (elements.toggleExplorerBtn) {
+        const btnRect = elements.toggleExplorerBtn.getBoundingClientRect();
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = `${btnRect.right + 12}px`;
+        tooltip.style.top = `${btnRect.top}px`;
+    }
+    
+    // Fade in
+    setTimeout(() => tooltip.classList.add('show'), 10);
+    
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+        tooltip.classList.remove('show');
+        setTimeout(() => tooltip.remove(), 300);
+    }, 4000);
 }
 
 function closeExplorer() {
     elements.fileTreeModal.classList.add('hidden');
+    if (elements.toggleExplorerBtn) {
+        elements.toggleExplorerBtn.classList.remove('active');
+    }
 }
 
-// Close popover on click outside
+// Close tooltips or popovers if clicking outside
 document.addEventListener('mousedown', (e) => {
-    if (!elements.fileTreeModal.classList.contains('hidden')) {
-        const isClickInside = elements.fileTreeModal.contains(e.target) || 
-                              elements.toggleExplorerBtn.contains(e.target);
-        if (!isClickInside) {
-            closeExplorer();
-        }
-    }
+    // Close tooltips or popovers if clicking outside
 });
 
 if (elements.toggleExplorerBtn) {
@@ -274,45 +305,118 @@ function getFileIcon(fileName) {
 }
 
 function renderFileTree(files) {
-    const tree = document.createElement('div');
-    tree.className = 'file-tree';
+    elements.fileTree.innerHTML = '';
+    const root = document.createElement('div');
+    root.className = 'file-tree';
 
-    // Sort: directories first (if directory structure is present in names, but list is flat)
-    const sortedFiles = [...files].sort((a, b) => a.path.localeCompare(b.path));
-
-    sortedFiles.forEach(file => {
-        const item = document.createElement('div');
-        item.className = 'file-item';
-        item.dataset.path = file.path;
-
-        const depth = (file.path.match(/\//g) || []).length;
-        const indent = document.createElement('span');
-        item.appendChild(indent);
-
-        const icon = document.createElement('span');
-        icon.className = 'file-icon';
-        icon.textContent = `[${getFileIcon(file.name)}]`;
-
-        const name = document.createElement('span');
-        name.className = 'file-name';
-        name.textContent = file.name;
-        name.title = file.path;
-
-        item.appendChild(icon);
-        item.appendChild(name);
-
-        item.style.paddingLeft = `${depth * 8 + 8}px`;
-
-        item.addEventListener('click', () => {
-            closeExplorer();
-            loadFile(file.path);
-        });
-
-        tree.appendChild(item);
+    // 1. Build nested tree object from flat file paths
+    const treeData = {};
+    files.forEach(file => {
+        const parts = file.path.split('/');
+        let current = treeData;
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (!current[part]) {
+                current[part] = { 
+                    name: part, 
+                    isDirectory: i < parts.length - 1,
+                    path: i === parts.length - 1 ? file.path : parts.slice(0, i + 1).join('/'),
+                    children: {} 
+                };
+            }
+            current = current[part].children;
+        }
     });
 
-    elements.fileTree.innerHTML = '';
-    elements.fileTree.appendChild(tree);
+    // 2. Recursive DOM builder
+    function buildNode(nodeData, container, depth = 0) {
+        // Sort: directories first, then files alphabetically
+        const nodes = Object.values(nodeData).sort((a, b) => {
+            if (a.isDirectory && !b.isDirectory) return -1;
+            if (!a.isDirectory && b.isDirectory) return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        nodes.forEach(node => {
+            const item = document.createElement('div');
+            item.className = 'tree-item'; // Re-used for both folder/file for search filtering
+            item.dataset.path = node.path;
+            
+            const row = document.createElement('div');
+            row.className = node.isDirectory ? 'tree-folder-row' : 'file-item';
+            row.style.paddingLeft = `${depth * 12 + 8}px`;
+            
+            const icon = document.createElement('span');
+            icon.className = 'file-icon';
+            
+            if (node.isDirectory) {
+                // Chevron icon for folder
+                const chevron = document.createElement('span');
+                chevron.className = 'tree-chevron';
+                chevron.textContent = '▼'; // open by default
+                row.appendChild(chevron);
+                
+                icon.textContent = '📂';
+                
+                const name = document.createElement('span');
+                name.className = 'file-name';
+                name.textContent = node.name;
+                
+                row.appendChild(icon);
+                row.appendChild(name);
+                item.appendChild(row);
+
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-children';
+                
+                // Toggle logic
+                row.addEventListener('click', () => {
+                    const isClosed = childrenContainer.classList.toggle('hidden');
+                    chevron.style.transform = isClosed ? 'rotate(-90deg)' : 'rotate(0deg)';
+                });
+                
+                buildNode(node.children, childrenContainer, depth + 1);
+                item.appendChild(childrenContainer);
+            } else {
+                // File
+                // indent placeholder if no chevron
+                const placeholder = document.createElement('span');
+                placeholder.className = 'tree-chevron-placeholder';
+                placeholder.style.width = '12px';
+                placeholder.style.display = 'inline-block';
+                row.appendChild(placeholder);
+
+                icon.textContent = `[${getFileIcon(node.name)}]`;
+                
+                const name = document.createElement('span');
+                name.className = 'file-name';
+                name.textContent = node.name;
+                name.title = node.path;
+                
+                row.appendChild(icon);
+                row.appendChild(name);
+                item.appendChild(row);
+                
+                row.addEventListener('click', () => {
+                    closeExplorer();
+                    loadFile(node.path);
+                });
+            }
+            container.appendChild(item);
+        });
+    }
+
+    buildNode(treeData, root);
+    elements.fileTree.appendChild(root);
+    
+    // Auto-open the file explorer when files are loaded
+    if (files && files.length > 0) {
+        elements.fileTreeModal.classList.remove('hidden');
+        // Add active state to the toggle button
+        if (elements.toggleExplorerBtn) {
+            elements.toggleExplorerBtn.classList.add('active');
+        }
+    }
 }
 
 // Search Filter
@@ -456,37 +560,62 @@ function buildSummaryRow(summary, confidence) {
         </div>`;
 }
 
+/**
+ * Build the single user-facing citation list.
+ *
+ * - Merges references by file; keeps up to 3 line ranges per file.
+ * - Sorts files by best relevance (highest first) and caps the list at 4.
+ * - Relevance scores stay in the data (see console.debug below) — never rendered.
+ */
+const MAX_CITATIONS = 4;
+const MAX_RANGES_PER_FILE = 3;
+
 function buildFileRefs(refs) {
     if (!refs || refs.length === 0) return '';
-    const chips = refs.map(ref => {
-        const label = ref.file || '';
-        const lines = ref.lines || '';
-        const reason = ref.reason ? ` title="${escapeHtml(ref.reason)}"` : '';
-        return `<a class="file-ref-chip" href="#"${reason} data-file="${escapeHtml(label)}" data-lines="${escapeHtml(lines)}"
-            >${escapeHtml(label)}<span class="chip-lines">${lines ? ':' + lines : ''}</span></a>`;
+
+    // Relevance may come from the LLM refs, the retrieval dump, or neither.
+    const relevanceOf = ref => {
+        const v = parseFloat(ref.relevance_score);
+        return Number.isFinite(v) ? v : 0;
+    };
+
+    // Group all references by file.
+    const byFile = new Map();
+    refs.forEach(ref => {
+        const file = ref.file || '';
+        if (!byFile.has(file)) byFile.set(file, []);
+        byFile.get(file).push(ref);
+    });
+
+    // Debug output keeps the underlying scores visible without polluting the UI.
+    console.debug('[RepoLogic] citation relevance scores:', refs.map(r => ({
+        file: r.file,
+        lines: r.lines,
+        relevance_score: relevanceOf(r) || null
+    })));
+
+    // Sort each file's ranges by relevance, keep top ranges per file,
+    // then sort files by their best range's relevance and cap the list.
+    const top = [...byFile.entries()]
+        .map(([file, entries]) => ({
+            file,
+            ranges: entries
+                .slice()
+                .sort((a, b) => relevanceOf(b) - relevanceOf(a))
+                .slice(0, MAX_RANGES_PER_FILE)
+        }))
+        .sort((a, b) => relevanceOf(b.ranges[0]) - relevanceOf(a.ranges[0]))
+        .slice(0, MAX_CITATIONS);
+
+    const chips = top.map(({ file, ranges }) => {
+        const primary = ranges[0];
+        const reason = primary.reason ? ` title="${escapeHtml(primary.reason)}"` : '';
+        return `<a class="file-ref-chip" href="#"${reason} data-file="${escapeHtml(file)}" data-lines="${escapeHtml(primary.lines || '')}">${escapeHtml(file)}</a>`;
     }).join('');
     return `
         <div class="file-refs-section">
             <div class="file-refs-header">SOURCES</div>
             <div class="file-refs-list">${chips}</div>
-        </div>`;
-}
-
-function buildQASourcesSection(sources) {
-    if (!sources || sources.length === 0) return '';
-    const sourceItems = sources.map(s => {
-        const relevance = s.relevance_score ? ` (${Math.round(s.relevance_score * 100)}%)` : '';
-        return `<div class="source-item">
-            <span class="source-icon">→</span>
-            <span class="source-file">${escapeHtml(s.file)}</span>
-            <span class="source-lines">L${escapeHtml(s.lines)}</span>
-            <span class="source-type">${relevance}</span>
-        </div>`;
-    }).join('');
-    return `
-        <div class="sources-section">
-            <div class="sources-header">SOURCES USED</div>
-            <div class="sources-list">${sourceItems}</div>
         </div>`;
 }
 
@@ -601,9 +730,8 @@ async function explainSelection() {
 
         loadMsg.innerHTML = `
             ${buildSummaryRow(result.summary, result.confidence)}
-            <div class="explanation-text">${marked.parse(result.explanation)}</div>
+            <div class="explanation-text">${DOMPurify.sanitize(marked.parse(result.explanation))}</div>
             ${buildFileRefs(result.file_references || [])}
-            ${buildQASourcesSection(result.sources || [])}
         `;
 
         loadMsg.querySelectorAll('pre code').forEach(block => {
@@ -666,9 +794,8 @@ async function askQuestion() {
 
         assistantMsg.innerHTML = `
             ${buildSummaryRow(result.summary, result.confidence)}
-            <div class="explanation-text">${marked.parse(result.answer)}</div>
+            <div class="explanation-text">${DOMPurify.sanitize(marked.parse(result.answer))}</div>
             ${buildFileRefs(result.file_references || [])}
-            ${buildQASourcesSection(result.sources || [])}
         `;
 
         assistantMsg.querySelectorAll('pre code').forEach(block => {
@@ -707,34 +834,87 @@ if (elements.qaInput) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// Stepper Helper Logic
+// Loading Status Helper Logic
 // ══════════════════════════════════════════════════════════════
 
-const stepperEl  = () => document.getElementById('analysis-stepper');
+const loadingStatusEl = () => document.getElementById('loading-status');
+const loadingStatusTextEl = () => document.getElementById('loading-status-text');
+const loadingProgressFillEl = () => document.getElementById('loading-progress-fill');
 const errorBannerEl = () => document.getElementById('stepper-error');
 
+const LOADING_STAGES = {
+    ingest: { text: 'Cloning repository...', progress: 25 },
+    chunk: { text: 'Analyzing structure...', progress: 50 },
+    embed: { text: 'Generating index...', progress: 75 },
+    ready: { text: 'Repository ready!', progress: 100 }
+};
+
+function setLoadingStatus(stage, customText = null) {
+    const statusEl = loadingStatusTextEl();
+    const progressEl = loadingProgressFillEl();
+    
+    if (!statusEl || !progressEl) return;
+    
+    if (stage && LOADING_STAGES[stage]) {
+        const stageInfo = LOADING_STAGES[stage];
+        statusEl.textContent = customText || stageInfo.text;
+        progressEl.style.width = `${stageInfo.progress}%`;
+        progressEl.classList.remove('indeterminate');
+    } else if (customText) {
+        statusEl.textContent = customText;
+        progressEl.classList.add('indeterminate');
+    }
+}
+
+function showLoadingStatus() {
+    const el = loadingStatusEl();
+    if (el) {
+        el.classList.remove('hidden');
+        // Start with indeterminate progress
+        const progressEl = loadingProgressFillEl();
+        if (progressEl) {
+            progressEl.classList.add('indeterminate');
+            progressEl.style.width = '30%';
+        }
+    }
+}
+
+function hideLoadingStatus() {
+    const el = loadingStatusEl();
+    if (el) el.classList.add('hidden');
+}
+
+function resetLoadingStatus() {
+    const progressEl = loadingProgressFillEl();
+    if (progressEl) {
+        progressEl.style.width = '0%';
+        progressEl.classList.remove('indeterminate');
+    }
+    const eb = errorBannerEl();
+    if (eb) eb.classList.add('hidden');
+}
+
+// Legacy stepper functions - redirect to new loading status
 function setStepperState(stepId, stepState, statusText) {
-    const el = document.getElementById(`step-${stepId}`);
-    if (!el) return;
-    el.classList.remove('active', 'completed', 'failed');
-    if (stepState) el.classList.add(stepState);
-    el.querySelector('.step-status').textContent = statusText || '';
+    if (stepState === 'active') {
+        setLoadingStatus(stepId, statusText);
+    } else if (stepState === 'completed') {
+        setLoadingStatus(stepId);
+    } else if (stepState === 'failed') {
+        setLoadingStatus(null, statusText || 'Operation failed');
+    }
 }
 
 function showStepper() {
-    const s = stepperEl();
-    if (s) s.classList.remove('hidden');
+    showLoadingStatus();
 }
 
 function hideStepper() {
-    const s = stepperEl();
-    if (s) s.classList.add('hidden');
+    hideLoadingStatus();
 }
 
 function resetStepper() {
-    ['ingest', 'chunk', 'embed', 'ready'].forEach(id => setStepperState(id, null, ''));
-    const eb = errorBannerEl();
-    if (eb) eb.classList.add('hidden');
+    resetLoadingStatus();
 }
 
 function showEmbedError(errorMessage, repoUrl) {
@@ -743,15 +923,19 @@ function showEmbedError(errorMessage, repoUrl) {
     eb.innerHTML = `
         <strong>⚠ Embedding failed</strong>
         ${escapeHtml(errorMessage || 'An unknown error occurred.')}
-        <br><button class="btn-retry-embed" onclick="retryEmbed('${escapeHtml(repoUrl)}')">↺ Retry Embedding</button>
+        <br><button class="btn-retry-embed">↺ Retry Embedding</button>
     `;
+    eb.querySelector('.btn-retry-embed').addEventListener('click', () => retryEmbed(repoUrl));
     eb.classList.remove('hidden');
+    
+    // Update status to show error
+    setLoadingStatus(null, 'Indexing failed');
 }
 
 async function retryEmbed(repoUrl) {
     const eb = errorBannerEl();
     if (eb) eb.classList.add('hidden');
-    setStepperState('embed', 'active', 'Retrying...');
+    setLoadingStatus('embed', 'Retrying indexing...');
 
     const embedFetch = fetch('/embed', {
         method: 'POST',
@@ -766,13 +950,12 @@ async function retryEmbed(repoUrl) {
             const st = await fetch(`/status?repo_url=${encodeURIComponent(repoUrl)}`).then(r => r.json());
             if (st.stage === 'embedded') {
                 clearInterval(poll);
-                setStepperState('embed', 'completed', 'Indexed');
-                setStepperState('ready', 'completed', 'Ready');
-                setTimeout(() => hideStepper(), 1500);
+                setLoadingStatus('ready');
+                setTimeout(() => hideLoadingStatus(), 1500);
                 enableQAInterface();
             } else if (st.stage === 'failed:embed' || attempts > 30) {
                 clearInterval(poll);
-                setStepperState('embed', 'failed', 'Failed');
+                setLoadingStatus(null, 'Retry failed');
                 showEmbedError(st.error_message || 'Retry failed', repoUrl);
             }
         } catch (_) {}
@@ -783,17 +966,16 @@ async function retryEmbed(repoUrl) {
         clearInterval(poll);
         const st = await fetch(`/status?repo_url=${encodeURIComponent(repoUrl)}`).then(r => r.json());
         if (st.stage === 'embedded') {
-            setStepperState('embed', 'completed', 'Indexed');
-            setStepperState('ready', 'completed', 'Ready');
-            setTimeout(() => hideStepper(), 1500);
+            setLoadingStatus('ready');
+            setTimeout(() => hideLoadingStatus(), 1500);
             enableQAInterface();
         } else {
-            setStepperState('embed', 'failed', 'Failed');
+            setLoadingStatus(null, 'Indexing failed');
             showEmbedError(st.error_message, repoUrl);
         }
     } catch (err) {
         clearInterval(poll);
-        setStepperState('embed', 'failed', 'Failed');
+        setLoadingStatus(null, 'Indexing failed');
         showEmbedError(err.message, repoUrl);
     }
 }
@@ -1022,6 +1204,15 @@ function switchToSpace(spaceId) {
 }
 
 function deleteSpace(spaceId) {
+    const space = spaceManager.spaces.spaces.find(s => s.id === spaceId);
+    if (!space) return;
+    
+    // Show confirmation alert
+    const spaceName = space.name;
+    const confirmed = confirm(`Delete space "${spaceName}"?\n\nThis will remove the space from your sidebar. The repository data on GitHub will not be affected.`);
+    
+    if (!confirmed) return;
+    
     spaceManager.delete(spaceId);
     renderSpacesList();
 
