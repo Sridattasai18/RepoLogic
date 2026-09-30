@@ -643,6 +643,12 @@ def explain_selection():
 # PHASE 6: Natural Language Q&A (NEW FEATURE)
 # ═══════════════════════════════════════════════════════════════
 
+INTENT_CLASSIFICATION_PROMPT = """Determine if the following question is related to software development, programming, code, or a specific repository.
+Return ONLY "YES" if it is related, or "NO" if it is completely unrelated (e.g. asking about the weather, colors, general knowledge, etc).
+
+Question: {question}
+"""
+
 QA_PROMPT = """You are an expert code analyst. A developer is asking a question about a GitHub repository.
 
 **User Question**: {question}
@@ -697,6 +703,28 @@ def ask_question():
     try:
         start_time = time.time()
         repo_id = get_repo_id(repo_url)
+
+        # 1. Intent Classification to save credits
+        intent_prompt = INTENT_CLASSIFICATION_PROMPT.format(question=question)
+        intent_response = get_llm().invoke(intent_prompt)
+        intent_raw = intent_response.content
+        if isinstance(intent_raw, list):
+            intent_raw = "".join(part.get("text", str(part)) if isinstance(part, dict) else str(part) for part in intent_raw)
+        elif not isinstance(intent_raw, str):
+            intent_raw = str(intent_raw)
+            
+        if "NO" in intent_raw.strip().upper():
+            return jsonify({
+                "question": question,
+                "summary": "",
+                "answer": "This question appears to be outside the scope of software development or this repository. Please ask questions specifically regarding the provided codebase and its tech stack.",
+                "confidence": "out_of_scope",
+                "file_references": [],
+                "chunks_used": 0,
+                "sources": [],
+                "response_time_ms": int((time.time() - start_time) * 1000),
+                "tokens_approx": {"input": 0, "output": 0},
+            }), 200
 
         # Check if embeddings exist
         embedding_store = EmbeddingStore()
