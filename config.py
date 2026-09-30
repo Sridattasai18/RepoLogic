@@ -41,8 +41,8 @@ class Config:
     MAX_RETRIES = 3
 
     # Embedding Settings (tune per Gemini quota tier)
-    EMBEDDING_BATCH_SIZE = 20           # chunks per API call (100 is too aggressive for free tier)
-    EMBEDDING_BATCH_DELAY_SEC = 15.0    # seconds to sleep between batches
+    EMBEDDING_BATCH_SIZE = 100          # chunks per API call
+    EMBEDDING_BATCH_DELAY_SEC = 2.0     # seconds to sleep between batches
     EMBEDDING_MAX_RETRIES = 5           # tenacity retry attempts per batch
     EMBEDDING_RETRY_MIN_WAIT = 10       # seconds, exponential backoff base
     EMBEDDING_RETRY_MAX_WAIT = 60       # seconds, exponential backoff ceiling
