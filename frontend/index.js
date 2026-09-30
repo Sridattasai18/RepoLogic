@@ -1066,65 +1066,42 @@ async function analyzeRepository() {
         setStepperState('chunk', 'completed', 'Analyzed');
 
         setStepperState('embed', 'active', 'Indexing...');
-        const embedFetch = fetch(`${API_URL}/embed`, {
+
+        // Fire /embed — it returns 202 immediately; the background thread does the real work.
+        // We detect completion via the /status poll below.
+        fetch(`${API_URL}/embed`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ repo_url: url })
+        }).catch(() => {}); // network errors here are non-fatal; poll will surface failures
+
+        // Poll /status every 3 seconds until embedded or failed
+        await new Promise((resolve) => {
+            const pollInterval = setInterval(async () => {
+                try {
+                    const st = await fetch(`${API_URL}/status?repo_url=${encodeURIComponent(url)}`).then(r => r.json());
+                    if (st.stage === 'embedded') {
+                        clearInterval(pollInterval);
+                        setStepperState('embed', 'completed', 'Indexed');
+                        setStepperState('ready',  'completed', 'Ready');
+                        renderFileTree(state.files);
+                        enableQAInterface();
+                        setStatus('success', 'Ready');
+                        setTimeout(() => hideStepper(), 1500);
+                        state.isLoading = false;
+                        resolve();
+                    } else if (st.stage === 'failed:embed') {
+                        clearInterval(pollInterval);
+                        setStepperState('embed', 'failed', 'Failed');
+                        showEmbedError(st.error_message || 'Indexing failed', url);
+                        setStatus('error', 'Embedding failed');
+                        state.isLoading = false;
+                        resolve();
+                    }
+                    // still in progress — keep polling
+                } catch (_) {} // transient network error; keep polling
+            }, 3000);
         });
-
-        let pollDone = false;
-        const pollInterval = setInterval(async () => {
-            if (pollDone) return;
-            try {
-                const st = await fetch(`${API_URL}/status?repo_url=${encodeURIComponent(url)}`).then(r => r.json());
-                if (st.stage === 'embedded') {
-                    pollDone = true;
-                    clearInterval(pollInterval);
-                    setStepperState('embed', 'completed', 'Indexed');
-                    setStepperState('ready',  'completed', 'Ready');
-                    renderFileTree(state.files);
-                    enableQAInterface();
-                    setStatus('success', 'Ready');
-                    setTimeout(() => hideStepper(), 1500);
-                    state.isLoading = false;
-                } else if (st.stage === 'failed:embed') {
-                    pollDone = true;
-                    clearInterval(pollInterval);
-                    setStepperState('embed', 'failed', 'Failed');
-                    showEmbedError(st.error_message, url);
-                    setStatus('error', 'Embedding failed');
-                    state.isLoading = false;
-                }
-            } catch (_) {}
-        }, 2000);
-
-        try {
-            const embedRes = await embedFetch;
-            const embedData = await embedRes.json();
-            if (!pollDone) {
-                clearInterval(pollInterval);
-                pollDone = true;
-                if (embedRes.ok) {
-                    setStepperState('embed', 'completed', 'Indexed');
-                    setStepperState('ready',  'completed', 'Ready');
-                    renderFileTree(state.files);
-                    enableQAInterface();
-                    setStatus('success', 'Ready');
-                    setTimeout(() => hideStepper(), 1500);
-                } else {
-                    setStepperState('embed', 'failed', 'Failed');
-                    showEmbedError(embedData.message || embedData.error, url);
-                    setStatus('error', 'Embedding failed');
-                }
-            }
-        } catch (embedErr) {
-            if (!pollDone) {
-                clearInterval(pollInterval);
-                setStepperState('embed', 'failed', 'Failed');
-                showEmbedError(embedErr.message, url);
-                setStatus('error', 'Embedding failed');
-            }
-        }
 
     } catch (error) {
         showError(error.message);

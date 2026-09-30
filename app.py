@@ -329,9 +329,9 @@ def chunk_repo():
 @app.route('/embed', methods=['POST'])
 def embed_repo():
     """
-    Generate embeddings and create FAISS index
-    POST /embed
-    Body: { "repo_url": "..." }
+    Generate embeddings and create FAISS index.
+    Returns 202 immediately and runs embedding in a background thread.
+    Poll /status to check progress.
     """
     data = request.json
     if not data or 'repo_url' not in data:
@@ -368,49 +368,36 @@ def embed_repo():
         if embedding_store.has_index(repo_id):
             return jsonify({"message": "already embedded", "skipped": True}), 200
 
-        result = embedding_store.create_index(repo_id, chunks)
-
-        if not result["success"]:
-            error_tag = result.get("error", "unknown_error")
-            detail = result.get("detail", "")
-
-            if error_tag == "quota_exhausted":
-                user_message = (
-                    "Gemini API quota / rate limit hit. Some or all chunks could not "
-                    "be embedded. Wait a minute and retry, or try a smaller repository."
-                )
-                status_code = 429
-            elif error_tag == "no_embeddings":
-                user_message = "No embeddings were generated — the chunk list may be empty."
-                status_code = 400
-            else:
-                user_message = "Embedding failed due to an internal error. Check server logs."
-                status_code = 500
-
-            # Option B: Write error sentinel
+        # ── Run in a background thread — /embed must return before Render's 100s timeout ──
+        def _run_embed():
             try:
-                error_file.write_text(user_message, encoding="utf-8")
-            except Exception as write_err:
-                logger.error(f"Failed to write embed error file: {write_err}")
+                result = embedding_store.create_index(repo_id, chunks)
+                if not result["success"]:
+                    error_tag = result.get("error", "unknown_error")
+                    if error_tag == "quota_exhausted":
+                        msg = "Gemini API quota / rate limit hit. Wait a minute and retry."
+                    elif error_tag == "no_embeddings":
+                        msg = "No embeddings were generated — the chunk list may be empty."
+                    else:
+                        msg = "Embedding failed due to an internal error."
+                    error_file.write_text(msg, encoding="utf-8")
+                    logger.error(f"[EMBED] Failed ({error_tag}): {msg}")
+                else:
+                    logger.info(f"[EMBED] ✅ Complete for {repo_id} — {result['total_chunks']} chunks")
+            except Exception as exc:
+                logger.error(f"[EMBED] Background thread failed: {exc}", exc_info=True)
+                try:
+                    error_file.write_text(f"Embedding failed: {str(exc)}", encoding="utf-8")
+                except Exception:
+                    pass
 
-            return jsonify({
-                "error": error_tag,
-                "message": user_message,
-                "detail": detail,
-            }), status_code
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        executor.submit(_run_embed)
 
-        logger.info(f"[EMBED] ✅ Complete for {repo_id}")
-
-        return jsonify({
-            "repo_id": repo_id,
-            "total_chunks": result["total_chunks"],
-            "chunks_skipped": result.get("chunks_skipped", 0),
-            "index_created": True,
-        }), 200
+        return jsonify({"message": "embedding started", "repo_id": repo_id}), 202
 
     except Exception as e:
         logger.error(f"[EMBED] Failed: {e}", exc_info=True)
-        # Write generic error sentinel
         try:
             error_file = Config.CHUNKS_DIR / f"{repo_id}_embed_error.txt"
             error_file.write_text(f"Embedding failed: {str(e)}", encoding="utf-8")
