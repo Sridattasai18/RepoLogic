@@ -1015,17 +1015,24 @@ function showColdStartNotice() {
                 <strong>Waking up the backend…</strong>
                 <span>This is a student project — the backend runs on a free server that sleeps when idle. First load may take 30–60 seconds. Thanks for your patience!</span>
             </div>
-            <button class="cold-notice-close" onclick="hideColdStartNotice()" title="Dismiss">✕</button>
+            <button class="cold-notice-close" id="cold-notice-close-btn" title="Dismiss">✕</button>
         </div>
     `;
     document.body.appendChild(notice);
     // Animate in
     requestAnimationFrame(() => notice.classList.add('cold-notice-show'));
+
+    // Close button
+    document.getElementById('cold-notice-close-btn').addEventListener('click', hideColdStartNotice);
+
+    // Auto-dismiss after 20 seconds
+    notice._autoTimer = setTimeout(hideColdStartNotice, 20000);
 }
 
 function hideColdStartNotice() {
     const notice = document.getElementById('cold-start-notice');
     if (!notice) return;
+    clearTimeout(notice._autoTimer);
     notice.classList.remove('cold-notice-show');
     setTimeout(() => notice.remove(), 350);
 }
