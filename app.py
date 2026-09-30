@@ -248,6 +248,9 @@ def chunk_repo():
         )
         chunk_store = ChunkStore(Config.CHUNKS_DIR)
         
+        if chunk_store.has_chunks(repo_id):
+            return jsonify({"message": "already chunked", "skipped": True}), 200
+            
         all_chunks = []
         files_chunked = 0
         
@@ -362,6 +365,9 @@ def embed_repo():
                 logger.warning(f"Could not delete old embed error file: {unlink_err}")
 
         embedding_store = EmbeddingStore()
+        if embedding_store.has_index(repo_id):
+            return jsonify({"message": "already embedded", "skipped": True}), 200
+
         result = embedding_store.create_index(repo_id, chunks)
 
         if not result["success"]:
