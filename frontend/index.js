@@ -204,7 +204,19 @@ async function apiCall(endpoint, data) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     });
-    const result = await response.json();
+    const text = await response.text();
+    let result;
+    try {
+        result = JSON.parse(text);
+    } catch (_) {
+        // Render (or any proxy) returned an HTML error page instead of JSON.
+        // Most common cause: 100-second gateway timeout on Render free tier.
+        throw new Error(
+            response.status === 502 || response.status === 504 || !response.ok
+                ? 'The backend timed out. The repository may be too large, or the server is still waking up. Please try again in a moment.'
+                : `Unexpected server response (HTTP ${response.status})`
+        );
+    }
     if (!response.ok) {
         throw new Error(result.error || 'API request failed');
     }

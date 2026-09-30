@@ -125,23 +125,21 @@ class RepoIngestor:
         
         logger.info(f"Cloning {clone_url}...")
         
-        # Clone with retry logic
-        for attempt in range(Config.MAX_RETRIES):
-            try:
-                git.Repo.clone_from(clone_url, repo_path, depth=1)
-                logger.info("✅ Clone successful")
-                return repo_path
-            except git.exc.GitCommandError as e:
-                if "not found" in str(e).lower():
-                    raise ValueError("Repository not found or is private")
-                elif attempt < Config.MAX_RETRIES - 1:
-                    logger.warning(f"Clone failed, retrying... ({attempt + 1}/{Config.MAX_RETRIES})")
-                    import time
-                    time.sleep(2 ** attempt)
-                else:
-                    raise ValueError(f"Failed to clone: {str(e)}")
-        
-        raise ValueError("Clone failed after retries")
+        # Clone with a 60s timeout — Render free tier has a 100s HTTP timeout
+        try:
+            git.Repo.clone_from(
+                clone_url, repo_path, depth=1,
+                env={"GIT_TERMINAL_PROMPT": "0"},
+                config=["core.sshCommand=ssh -o StrictHostKeyChecking=no"],
+                kill_after_timeout=60
+            )
+            logger.info("✅ Clone successful")
+            return repo_path
+        except git.exc.GitCommandError as e:
+            err = str(e).lower()
+            if "not found" in err or "repository" in err:
+                raise ValueError("Repository not found or is private")
+            raise ValueError(f"Failed to clone repository: {str(e)}")
     
     def _extract_files(self, repo_path: Path, repo_id: str) -> List[Dict[str, Any]]:
         """Extract structured file data"""
