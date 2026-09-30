@@ -4,6 +4,8 @@
  */
 
 // ══════════════════════════════════════════════════════════════
+const API_URL = '';  // same origin — Flask serves both frontend and API
+
 // Space Manager (localStorage persistence)
 // ══════════════════════════════════════════════════════════════
 
@@ -197,12 +199,24 @@ function hideError() {
 // ══════════════════════════════════════════════════════════════
 
 async function apiCall(endpoint, data) {
-    const response = await fetch(endpoint, {
+    const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     });
-    const result = await response.json();
+    const text = await response.text();
+    let result;
+    try {
+        result = JSON.parse(text);
+    } catch (_) {
+        // Render (or any proxy) returned an HTML error page instead of JSON.
+        // Most common cause: 100-second gateway timeout on Render free tier.
+        throw new Error(
+            response.status === 502 || response.status === 504 || !response.ok
+                ? 'The backend timed out. The repository may be too large, or the server is still waking up. Please try again in a moment.'
+                : `Unexpected server response (HTTP ${response.status})`
+        );
+    }
     if (!response.ok) {
         throw new Error(result.error || 'API request failed');
     }
@@ -440,7 +454,7 @@ async function loadFile(filePath) {
     setStatus('loading', 'Loading file...');
 
     try {
-        const response = await fetch(`/file-content?repo_id=${state.repoId}&path=${encodeURIComponent(filePath)}`);
+        const response = await fetch(`${API_URL}/file-content?repo_id=${state.repoId}&path=${encodeURIComponent(filePath)}`);
         if (!response.ok) throw new Error('Failed to load file');
 
         const data = await response.json();
@@ -637,7 +651,7 @@ async function toggleInlineCitationBlock(chip, filePath, linesRange) {
     chip.parentNode.insertBefore(block, chip.nextSibling);
 
     try {
-        const response = await fetch(`/file-content?repo_id=${state.repoId}&path=${encodeURIComponent(filePath)}`);
+        const response = await fetch(`${API_URL}/file-content?repo_id=${state.repoId}&path=${encodeURIComponent(filePath)}`);
         if (!response.ok) throw new Error();
         const data = await response.json();
 
@@ -937,7 +951,7 @@ async function retryEmbed(repoUrl) {
     if (eb) eb.classList.add('hidden');
     setLoadingStatus('embed', 'Retrying indexing...');
 
-    const embedFetch = fetch('/embed', {
+    const embedFetch = fetch(`${API_URL}/embed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repo_url: repoUrl })
@@ -947,7 +961,7 @@ async function retryEmbed(repoUrl) {
     const poll = setInterval(async () => {
         attempts++;
         try {
-            const st = await fetch(`/status?repo_url=${encodeURIComponent(repoUrl)}`).then(r => r.json());
+            const st = await fetch(`${API_URL}/status?repo_url=${encodeURIComponent(repoUrl)}`).then(r => r.json());
             if (st.stage === 'embedded') {
                 clearInterval(poll);
                 setLoadingStatus('ready');
@@ -964,7 +978,7 @@ async function retryEmbed(repoUrl) {
     try {
         await embedFetch;
         clearInterval(poll);
-        const st = await fetch(`/status?repo_url=${encodeURIComponent(repoUrl)}`).then(r => r.json());
+        const st = await fetch(`${API_URL}/status?repo_url=${encodeURIComponent(repoUrl)}`).then(r => r.json());
         if (st.stage === 'embedded') {
             setLoadingStatus('ready');
             setTimeout(() => hideLoadingStatus(), 1500);
@@ -987,6 +1001,43 @@ function enableQAInterface() {
 }
 
 // ══════════════════════════════════════════════════════════════
+// Cold-Start Notice (Render free tier wake-up)
+// ══════════════════════════════════════════════════════════════
+
+function showColdStartNotice() {
+    if (document.getElementById('cold-start-notice')) return;
+    const notice = document.createElement('div');
+    notice.id = 'cold-start-notice';
+    notice.innerHTML = `
+        <div class="cold-notice-inner">
+            <span class="cold-notice-icon">☕</span>
+            <div class="cold-notice-text">
+                <strong>Waking up the backend…</strong>
+                <span>This is a student project — the backend runs on a free server that sleeps when idle. First load may take 30–60 seconds. Thanks for your patience!</span>
+            </div>
+            <button class="cold-notice-close" id="cold-notice-close-btn" title="Dismiss">✕</button>
+        </div>
+    `;
+    document.body.appendChild(notice);
+    // Animate in
+    requestAnimationFrame(() => notice.classList.add('cold-notice-show'));
+
+    // Close button
+    document.getElementById('cold-notice-close-btn').addEventListener('click', hideColdStartNotice);
+
+    // Auto-dismiss after 20 seconds
+    notice._autoTimer = setTimeout(hideColdStartNotice, 20000);
+}
+
+function hideColdStartNotice() {
+    const notice = document.getElementById('cold-start-notice');
+    if (!notice) return;
+    clearTimeout(notice._autoTimer);
+    notice.classList.remove('cold-notice-show');
+    setTimeout(() => notice.remove(), 350);
+}
+
+// ══════════════════════════════════════════════════════════════
 // Repository Analysis
 // ══════════════════════════════════════════════════════════════
 
@@ -999,9 +1050,13 @@ async function analyzeRepository() {
     resetStepper();
     setStatus('loading', 'Analyzing...');
 
+    // Cold-start notice — the backend (Render free tier) may need ~30–60s to wake up
+    showColdStartNotice();
+
     try {
         setStepperState('ingest', 'active', 'Cloning...');
         const ingestResult = await apiCall('/ingest', { repo_url: url });
+        hideColdStartNotice();                   // backend is awake, hide notice
         state.repoId = ingestResult.repo_id;
         state.files  = ingestResult.files;
         setStepperState('ingest', 'completed', 'Cloned');
@@ -1011,65 +1066,42 @@ async function analyzeRepository() {
         setStepperState('chunk', 'completed', 'Analyzed');
 
         setStepperState('embed', 'active', 'Indexing...');
-        const embedFetch = fetch('/embed', {
+
+        // Fire /embed — it returns 202 immediately; the background thread does the real work.
+        // We detect completion via the /status poll below.
+        fetch(`${API_URL}/embed`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ repo_url: url })
+        }).catch(() => {}); // network errors here are non-fatal; poll will surface failures
+
+        // Poll /status every 3 seconds until embedded or failed
+        await new Promise((resolve) => {
+            const pollInterval = setInterval(async () => {
+                try {
+                    const st = await fetch(`${API_URL}/status?repo_url=${encodeURIComponent(url)}`).then(r => r.json());
+                    if (st.stage === 'embedded') {
+                        clearInterval(pollInterval);
+                        setStepperState('embed', 'completed', 'Indexed');
+                        setStepperState('ready',  'completed', 'Ready');
+                        renderFileTree(state.files);
+                        enableQAInterface();
+                        setStatus('success', 'Ready');
+                        setTimeout(() => hideStepper(), 1500);
+                        state.isLoading = false;
+                        resolve();
+                    } else if (st.stage === 'failed:embed') {
+                        clearInterval(pollInterval);
+                        setStepperState('embed', 'failed', 'Failed');
+                        showEmbedError(st.error_message || 'Indexing failed', url);
+                        setStatus('error', 'Embedding failed');
+                        state.isLoading = false;
+                        resolve();
+                    }
+                    // still in progress — keep polling
+                } catch (_) {} // transient network error; keep polling
+            }, 3000);
         });
-
-        let pollDone = false;
-        const pollInterval = setInterval(async () => {
-            if (pollDone) return;
-            try {
-                const st = await fetch(`/status?repo_url=${encodeURIComponent(url)}`).then(r => r.json());
-                if (st.stage === 'embedded') {
-                    pollDone = true;
-                    clearInterval(pollInterval);
-                    setStepperState('embed', 'completed', 'Indexed');
-                    setStepperState('ready',  'completed', 'Ready');
-                    renderFileTree(state.files);
-                    enableQAInterface();
-                    setStatus('success', 'Ready');
-                    setTimeout(() => hideStepper(), 1500);
-                    state.isLoading = false;
-                } else if (st.stage === 'failed:embed') {
-                    pollDone = true;
-                    clearInterval(pollInterval);
-                    setStepperState('embed', 'failed', 'Failed');
-                    showEmbedError(st.error_message, url);
-                    setStatus('error', 'Embedding failed');
-                    state.isLoading = false;
-                }
-            } catch (_) {}
-        }, 2000);
-
-        try {
-            const embedRes = await embedFetch;
-            const embedData = await embedRes.json();
-            if (!pollDone) {
-                clearInterval(pollInterval);
-                pollDone = true;
-                if (embedRes.ok) {
-                    setStepperState('embed', 'completed', 'Indexed');
-                    setStepperState('ready',  'completed', 'Ready');
-                    renderFileTree(state.files);
-                    enableQAInterface();
-                    setStatus('success', 'Ready');
-                    setTimeout(() => hideStepper(), 1500);
-                } else {
-                    setStepperState('embed', 'failed', 'Failed');
-                    showEmbedError(embedData.message || embedData.error, url);
-                    setStatus('error', 'Embedding failed');
-                }
-            }
-        } catch (embedErr) {
-            if (!pollDone) {
-                clearInterval(pollInterval);
-                setStepperState('embed', 'failed', 'Failed');
-                showEmbedError(embedErr.message, url);
-                setStatus('error', 'Embedding failed');
-            }
-        }
 
     } catch (error) {
         showError(error.message);
