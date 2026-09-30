@@ -989,6 +989,36 @@ function enableQAInterface() {
 }
 
 // ══════════════════════════════════════════════════════════════
+// Cold-Start Notice (Render free tier wake-up)
+// ══════════════════════════════════════════════════════════════
+
+function showColdStartNotice() {
+    if (document.getElementById('cold-start-notice')) return;
+    const notice = document.createElement('div');
+    notice.id = 'cold-start-notice';
+    notice.innerHTML = `
+        <div class="cold-notice-inner">
+            <span class="cold-notice-icon">☕</span>
+            <div class="cold-notice-text">
+                <strong>Waking up the backend…</strong>
+                <span>This is a student project — the backend runs on a free server that sleeps when idle. First load may take 30–60 seconds. Thanks for your patience!</span>
+            </div>
+            <button class="cold-notice-close" onclick="hideColdStartNotice()" title="Dismiss">✕</button>
+        </div>
+    `;
+    document.body.appendChild(notice);
+    // Animate in
+    requestAnimationFrame(() => notice.classList.add('cold-notice-show'));
+}
+
+function hideColdStartNotice() {
+    const notice = document.getElementById('cold-start-notice');
+    if (!notice) return;
+    notice.classList.remove('cold-notice-show');
+    setTimeout(() => notice.remove(), 350);
+}
+
+// ══════════════════════════════════════════════════════════════
 // Repository Analysis
 // ══════════════════════════════════════════════════════════════
 
@@ -1001,9 +1031,13 @@ async function analyzeRepository() {
     resetStepper();
     setStatus('loading', 'Analyzing...');
 
+    // Cold-start notice — the backend (Render free tier) may need ~30–60s to wake up
+    showColdStartNotice();
+
     try {
         setStepperState('ingest', 'active', 'Cloning...');
         const ingestResult = await apiCall('/ingest', { repo_url: url });
+        hideColdStartNotice();                   // backend is awake, hide notice
         state.repoId = ingestResult.repo_id;
         state.files  = ingestResult.files;
         setStepperState('ingest', 'completed', 'Cloned');
